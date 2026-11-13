@@ -10,3 +10,9 @@ Instalación: pendiente de diagnóstico en el dispositivo; la actualización no 
 Novedades v0.4:
 - Nueva opción de visualización en estantería: Lomo, Portada, Canto o Apilado.
 - Para Apilado puedes elegir cantidad de libros y si la pila muestra Portada o Canto.
+
+
+Novedades v0.5:
+- Corregido el cambio de visualización en repisa: ahora sí guarda y muestra Lomo, Portada, Canto o Apilado.
+- Nuevo editor de libro con interfaz más visual: libro 3D arriba y secciones bonitas debajo.
+- Mejoras en el flujo de edición y actualización de la PWA.

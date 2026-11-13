@@ -200,6 +200,8 @@ function applyTheme(){
 
 function showSheet(html){ const dlg=$('dlg'); dlg.innerHTML=`<div class="sheet">${html}</div>`; if(!dlg.open) dlg.showModal(); }
 function closeSheet(){ $('dlg').close(); }
+function jumpToEditorSection(id){ const el=$(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+function rerenderBookEditor(){ if(!draft) return; const snapshot=structuredClone(draft); editBook(snapshot.id, snapshot); }
 
 function openQuickActions(){
   showSheet(`
@@ -308,48 +310,98 @@ function importSearchResult(results, index){
   data.books.push(book); closeSheet(); rerender(); setTimeout(()=>editBook(book.id),120);
 }
 
-function editBook(id){
+function editBook(id, override){
   const base={id:uid(), title:'', author:'', isbn:'', pages:0, current:0, status:'Por leer', description:'', publisher:'', year:'', categories:'', height:22,width:14,thick:3,color:'#7b5472',edgeColor:'#e6dbc7',display:'Lomo',shelf:activeShelf().id,row:0,format:'Tapa blanda',rating:0,notes:'',saga:'',collection:'', cover:'',spine:'',edge:'',back:'',top:'',bottom:'',stackCount:3,stackFace:'Portada'};
-  draft=structuredClone(id?getBook(id):base); cubeAngle=-20;
+  const existing=id ? getBook(id) : null;
+  draft=structuredClone(override || existing || base); cubeAngle=-20;
+  const exists=!!data.books.find(b=>b.id===draft.id);
   showSheet(`
-    <div class="sheet-header"><div><h2>${id?'Editar libro':'Nuevo libro'}</h2><div class="muted small">Personaliza el ejemplar físico</div></div><button class="sheet-close" onclick="closeSheet()">×</button></div>
-    <div class="preview" id="preview"><div class="cube" id="cube"></div></div>
-    <div class="tabs" style="margin:12px 0 0"><button class="chip" onclick="cubeAngle=0;drawCube()">Portada</button><button class="chip" onclick="cubeAngle=90;drawCube()">Lomo</button><button class="chip" onclick="cubeAngle=-90;drawCube()">Canto</button><button class="chip" onclick="cubeAngle=180;drawCube()">Contraportada</button></div>
-    <div class="field" style="margin-top:14px">
-      <label>Título</label><input value="${esc(draft.title)}" oninput="draft.title=this.value;drawCube()">
-      <label>Autor</label><input value="${esc(draft.author)}" oninput="draft.author=this.value">
-      <label>Descripción</label><textarea oninput="draft.description=this.value">${esc(draft.description||'')}</textarea>
-      <label>ISBN</label><input id="bookISBN" value="${esc(draft.isbn)}" oninput="draft.isbn=this.value"><label>Enlace de Goodreads (opcional)</label><input id="grBookUrl" type="url" value="${esc(draft.goodreadsUrl||'')}" oninput="draft.goodreadsUrl=this.value" placeholder="https://www.goodreads.com/book/show/…">
-      <div class="swatch-row">
-        <div><label>Páginas</label><input type="number" min="0" value="${draft.pages||0}" oninput="draft.pages=+this.value"></div>
-        <div><label>Página actual</label><input type="number" min="0" value="${draft.current||0}" oninput="draft.current=+this.value"></div>
+    <div class="editor-shell">
+      <div class="sheet-header"><div><h2>${exists?'Editar libro':'Nuevo libro'}</h2><div class="muted small">Personaliza el ejemplar físico y cómo se verá en tu estantería</div></div><button class="sheet-close" onclick="closeSheet()">×</button></div>
+      <section class="editor-hero">
+        <div class="preview" id="preview"><div class="cube" id="cube"></div></div>
+        <div class="editor-statline">
+          <div class="editor-stat">Vista en repisa: <strong>${esc(draft.display||'Lomo')}</strong></div>
+          <div class="editor-stat">Formato: <strong>${esc(draft.format||'Tapa blanda')}</strong></div>
+          <div class="editor-stat">Medidas: <strong>${esc(draft.height||22)} × ${esc(draft.width||14)} × ${esc(draft.thick||3)} cm</strong></div>
+        </div>
+        <div class="editor-view-tabs"><button onclick="cubeAngle=0;drawCube()">Portada</button><button onclick="cubeAngle=90;drawCube()">Lomo</button><button onclick="cubeAngle=-90;drawCube()">Canto</button><button onclick="cubeAngle=180;drawCube()">Contraportada</button></div>
+        <div class="editor-jump">
+          <button onclick="jumpToEditorSection('secBasic')">Detalles</button>
+          <button onclick="jumpToEditorSection('secShelf')">Estantería</button>
+          <button onclick="jumpToEditorSection('secStyle')">Diseño</button>
+          <button onclick="jumpToEditorSection('secPhotos')">Fotos</button>
+        </div>
+      </section>
+
+      <section class="editor-block" id="secBasic">
+        <h3>Detalles del libro</h3><div class="muted small">La información principal de tu ejemplar.</div>
+        <div class="field">
+          <label>Título</label><input value="${esc(draft.title)}" oninput="draft.title=this.value;drawCube()">
+          <label>Autor</label><input value="${esc(draft.author)}" oninput="draft.author=this.value">
+          <label>Descripción</label><textarea oninput="draft.description=this.value">${esc(draft.description||'')}</textarea>
+          <label>ISBN</label><input id="bookISBN" value="${esc(draft.isbn)}" oninput="draft.isbn=this.value">
+          <label>Enlace de Goodreads (opcional)</label><input id="grBookUrl" type="url" value="${esc(draft.goodreadsUrl||'')}" oninput="draft.goodreadsUrl=this.value" placeholder="https://www.goodreads.com/book/show/…">
+          <div class="swatch-row">
+            <div><label>Páginas</label><input type="number" min="0" value="${draft.pages||0}" oninput="draft.pages=+this.value"></div>
+            <div><label>Página actual</label><input type="number" min="0" value="${draft.current||0}" oninput="draft.current=+this.value"></div>
+          </div>
+          <div class="swatch-row">
+            <div><label>Estado</label><select onchange="draft.status=this.value">${STATUS.filter(s=>s!=='Todos').map(s=>`<option ${draft.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+            <div><label>Formato</label><select onchange="draft.format=this.value;rerenderBookEditor()">${['Tapa blanda','Tapa dura','Digital','Audiolibro'].map(s=>`<option ${draft.format===s?'selected':''}>${s}</option>`).join('')}</select></div>
+          </div>
+          <div class="swatch-row">
+            <div><label>Valoración</label><input type="number" step=".5" min="0" max="5" value="${draft.rating||0}" oninput="draft.rating=+this.value"></div>
+            <div><label>Saga</label><input value="${esc(draft.saga||'')}" oninput="draft.saga=this.value"></div>
+          </div>
+          <label>Colección</label><input value="${esc(draft.collection||'')}" oninput="draft.collection=this.value">
+          <label>Notas / reseña</label><textarea oninput="draft.notes=this.value">${esc(draft.notes||'')}</textarea>
+        </div>
+      </section>
+
+      <section class="editor-block" id="secShelf">
+        <h3>Cómo se verá en tu repisa</h3><div class="muted small">Elige la orientación visual del libro dentro de tu biblioteca.</div>
+        <div class="field">
+          <label>Mostrar en repisa</label><select onchange="draft.display=this.value;rerenderBookEditor()">${['Lomo','Portada','Canto','Apilado'].map(s=>`<option ${draft.display===s?'selected':''}>${s}</option>`).join('')}</select>
+          ${draft.display==='Apilado'?`<div class="swatch-row"><div><label>Cantidad apilada</label><input type="number" min="2" max="6" value="${draft.stackCount||3}" oninput="draft.stackCount=Math.max(2,Math.min(6,+this.value||3));drawCube()"></div><div><label>Vista de la pila</label><select onchange="draft.stackFace=this.value;drawCube()">${['Portada','Canto'].map(s=>`<option ${draft.stackFace===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`:''}
+          <div class="swatch-row">
+            <div><label>Biblioteca</label><select onchange="draft.shelf=this.value">${data.shelves.map(s=>`<option value="${s.id}" ${draft.shelf===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+            <div><label>Repisa (1=superior)</label><input type="number" min="1" value="${(draft.row||0)+1}" oninput="draft.row=Math.max(0,+this.value-1)"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="editor-block" id="secStyle">
+        <h3>Diseño del ejemplar</h3><div class="muted small">Ajusta medidas, color del lomo y color del canto.</div>
+        <div class="field">
+          <div class="swatch-row">
+            <div><label>Altura (cm)</label><input type="number" step=".1" min="0.1" value="${draft.height||22}" oninput="draft.height=+this.value;drawCube()"></div>
+            <div><label>Ancho (cm)</label><input type="number" step=".1" min="0.1" value="${draft.width||14}" oninput="draft.width=+this.value;drawCube()"></div>
+          </div>
+          <div class="swatch-row">
+            <div><label>Grosor (cm)</label><input type="number" step=".1" min="0.1" value="${draft.thick||3}" oninput="draft.thick=+this.value;drawCube()"></div>
+            <div><label>Color del lomo</label><input type="color" value="${draft.color||'#7b5472'}" oninput="draft.color=this.value;drawCube()"></div>
+          </div>
+          <label>Color del canto</label><input type="color" value="${draft.edgeColor||'#e6dbc7'}" oninput="draft.edgeColor=this.value;drawCube()">
+        </div>
+      </section>
+
+      <section class="editor-block" id="secPhotos">
+        <h3>Fotos del libro</h3><div class="muted small">Puedes usar imágenes reales de tu ejemplar para personalizar el 3D.</div>
+        <div class="field">
+          <label>Portada</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.cover=x;drawCube()})">
+          <label>Lomo</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.spine=x;drawCube()})">
+          <label>Canto delantero</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.edge=x;drawCube()})">
+          <label>Contraportada</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.back=x;drawCube()})">
+          <label>Canto superior</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.top=x;drawCube()})">
+          <label>Canto inferior</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.bottom=x;drawCube()})">
+        </div>
+      </section>
+
+      <div class="editor-actionbar">
+        <div class="editor-save-row"><button class="btn-soft" onclick="saveBook()">Guardar libro</button>${exists?`<button class="mini-btn" onclick="deleteBook('${draft.id}')">Eliminar</button>`:''}</div>
       </div>
-      <div class="swatch-row">
-        <div><label>Altura (cm)</label><input type="number" step=".1" min="0.1" value="${draft.height||22}" oninput="draft.height=+this.value;drawCube()"></div>
-        <div><label>Ancho (cm)</label><input type="number" step=".1" min="0.1" value="${draft.width||14}" oninput="draft.width=+this.value;drawCube()"></div>
-      </div>
-      <div class="swatch-row">
-        <div><label>Grosor (cm)</label><input type="number" step=".1" min="0.1" value="${draft.thick||3}" oninput="draft.thick=+this.value;drawCube()"></div>
-        <div><label>Valoración</label><input type="number" step=".5" min="0" max="5" value="${draft.rating||0}" oninput="draft.rating=+this.value"></div>
-      </div>
-      <label>Estado</label><select onchange="draft.status=this.value">${STATUS.filter(s=>s!=='Todos').map(s=>`<option ${draft.status===s?'selected':''}>${s}</option>`).join('')}</select>
-      <label>Formato</label><select onchange="draft.format=this.value">${['Tapa blanda','Tapa dura','Digital','Audiolibro'].map(s=>`<option ${draft.format===s?'selected':''}>${s}</option>`).join('')}</select>
-      <label>Mostrar en repisa</label><select onchange="draft.display=this.value;editBook(draft.id)">${['Lomo','Portada','Canto','Apilado'].map(s=>`<option ${draft.display===s?'selected':''}>${s}</option>`).join('')}</select>
-      ${draft.display==='Apilado'?`<div class="swatch-row"><div><label>Cantidad apilada</label><input type="number" min="2" max="6" value="${draft.stackCount||3}" oninput="draft.stackCount=Math.max(2,Math.min(6,+this.value||3));drawCube()"></div><div><label>Vista de la pila</label><select onchange="draft.stackFace=this.value;drawCube()">${['Portada','Canto'].map(s=>`<option ${draft.stackFace===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`:''}
-      <label>Biblioteca</label><select onchange="draft.shelf=this.value">${data.shelves.map(s=>`<option value="${s.id}" ${draft.shelf===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
-      <label>Repisa (1=superior)</label><input type="number" min="1" value="${(draft.row||0)+1}" oninput="draft.row=Math.max(0,+this.value-1)">
-      <div class="swatch-row"><div><label>Color del lomo</label><input type="color" value="${draft.color||'#7b5472'}" oninput="draft.color=this.value;drawCube()"></div><div><label>Color del canto</label><input type="color" value="${draft.edgeColor||'#e6dbc7'}" oninput="draft.edgeColor=this.value;drawCube()"></div></div>
-      <label>Saga</label><input value="${esc(draft.saga||'')}" oninput="draft.saga=this.value">
-      <label>Colección</label><input value="${esc(draft.collection||'')}" oninput="draft.collection=this.value">
-      <label>Notas / reseña</label><textarea oninput="draft.notes=this.value">${esc(draft.notes||'')}</textarea>
-      <label>Portada</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.cover=x;drawCube()})">
-      <label>Lomo</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.spine=x;drawCube()})">
-      <label>Canto delantero</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.edge=x;drawCube()})">
-      <label>Contraportada</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.back=x;drawCube()})">
-      <label>Canto superior</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.top=x;drawCube()})">
-      <label>Canto inferior</label><input type="file" accept="image/*" onchange="readImage(this.files[0]).then(x=>{draft.bottom=x;drawCube()})">
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button class="btn-soft" onclick="saveBook()">Guardar libro</button>${id?`<button class="mini-btn" onclick="deleteBook('${id}')">Eliminar</button>`:''}</div>
   `);
   drawCube();
   const prev=$('preview'); let dragging=false,lastX=0;
@@ -357,6 +409,7 @@ function editBook(id){
   prev.onpointermove=e=>{if(dragging){cubeAngle += (e.clientX-lastX)*.8; lastX=e.clientX; drawCube();}};
   prev.onpointerup=()=>dragging=false; prev.onpointercancel=()=>dragging=false;
 }
+
 function drawCube(){
   const cube=$('cube'); if(!cube) return;
   if((draft.display||'')==='Apilado'){
