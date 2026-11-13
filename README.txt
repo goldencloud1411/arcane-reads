@@ -1,2 +1,12 @@
-Arcane Reads 0.2.1 — corrección de instalación y móvil
-Sube el contenido a la raíz del repositorio arcane-reads. Reemplaza index.html, site.webmanifest y service-worker.js; conserva el resto. La identidad de instalación es /arcane-reads/. Si el repositorio tiene otro nombre, ajusta id, start_url y scope. No borres datos de Chrome. La base de datos de la versión 0.2 permanece intacta.
+Arcane Reads v0.3 — GitHub Pages
+
+Sube los archivos de esta carpeta a la raíz del repositorio existente arcane-reads. No cambies de repositorio ni borres los datos del navegador.
+
+Novedades: Goodreads como acceso principal de búsqueda, búsqueda de ficha por ISBN mediante Google Books/Open Library, enlace de Goodreads en la ficha, importación CSV y resultados de búsqueda corregidos. Goodreads abre su sitio oficial en otra pestaña; no se extrae directamente su catálogo. No se promete sincronización automática. La PWA conserva su identificador y base local de v0.2.1.
+
+Instalación: pendiente de diagnóstico en el dispositivo; la actualización no garantiza resolver el mensaje de Chrome de app ya instalada.
+
+
+Novedades v0.4:
+- Nueva opción de visualización en estantería: Lomo, Portada, Canto o Apilado.
+- Para Apilado puedes elegir cantidad de libros y si la pila muestra Portada o Canto.
