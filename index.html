@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#9a3941">
   <title>Arcane Reads</title>
-  <link rel="manifest" href="site.webmanifest">
+  <link rel="manifest" href="site.webmanifest?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -128,7 +128,10 @@
     .switch-row:last-child{border-bottom:none}
     .link-btn{padding:0;background:none;border:none;color:var(--accent);font-weight:700}
     @media (max-width:520px){.fab{right:18px}.book-grid{grid-template-columns:1fr 1fr}.metric-grid{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}.hero-copy{padding-left:102px}}
-  </style>
+  
+/* Responsive containment: allow grid tracks and flex children to shrink. */
+html,body{max-width:100%;overflow-x:hidden} .app{width:100%;max-width:480px;overflow-x:clip} .page,.section-gap,.section-gap>*,.card,.hero-copy,.shelf-shell,.shelf-preview,.grid-2>*{min-width:0;max-width:100%} .section-gap{grid-template-columns:minmax(0,1fr)} .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))} .hero-actions{grid-template-columns:minmax(0,1fr)} .hero-actions button{width:100%;white-space:normal} .brand{min-width:0} .brand-badge{flex-shrink:0} .brand h1{font-size:clamp(23px,6vw,32px);line-height:1.08;overflow-wrap:anywhere} .topbar>.mini-btn{flex-shrink:0;max-width:110px} .tabs,.shelf-row{min-width:0;max-width:100%;overflow-x:auto} .banner{min-width:0} .banner>div{min-width:0} .banner button{flex-shrink:0} .nav{width:min(480px,100%);grid-template-columns:repeat(5,minmax(0,1fr));padding-inline:5px} .nav button{min-width:0;font-size:clamp(9px,2.65vw,12px)} .fab{z-index:35} .sheet{max-width:100%} h1,h2,h3,h4{color:var(--ink)} .hero h2,.hero h3{color:#fff} .book-cover{padding:0} .book-cover img{object-fit:contain} @media(max-width:520px){.grid-2{grid-template-columns:minmax(0,1fr)} .topbar{padding:16px 16px 12px}.hero-copy{padding-left:100px}.hero .hero-book{width:78px;height:116px}.hero-copy h2{font-size:21px}.hero-copy p{font-size:14px;line-height:1.4}.hero-copy{min-height:122px}.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.metric{padding:10px}.metric .n{font-size:25px}}
+</style>
 </head>
 <body>
 <div class="app" id="app">
@@ -148,7 +151,7 @@ const today = ()=>new Date().toISOString().slice(0,10);
 const monthName = ()=>new Intl.DateTimeFormat('es-PE',{month:'long',year:'numeric'}).format(new Date());
 let tab='Inicio', shelfId='default', draft=null, cubeAngle=-22, filters={status:'Todos',query:''};
 let data={
-  profile:{name:'Pierina',theme:'classic'},
+  profile:{name:'Valeria',theme:'classic'},
   theme:'classic',
   goal:20,
   books:[],
