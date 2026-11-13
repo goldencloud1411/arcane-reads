@@ -1,0 +1,2 @@
+Arcane Reads PWA
+Sube todos los archivos a la raíz de un repositorio público de GitHub. Settings > Pages > Deploy from a branch > main > / (root). Abre la URL HTTPS desde Chrome en Android y selecciona Instalar aplicación o Añadir a pantalla de inicio. En iPhone, Safari > Compartir > Añadir a pantalla de inicio. Los datos son locales a cada navegador/dispositivo; exporta copias en Perfil. No hay sincronización en nube todavía.
