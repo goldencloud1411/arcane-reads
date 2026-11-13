@@ -200,8 +200,9 @@ function applyTheme(){
 
 function showSheet(html){ const dlg=$('dlg'); dlg.innerHTML=`<div class="sheet">${html}</div>`; if(!dlg.open) dlg.showModal(); }
 function closeSheet(){ $('dlg').close(); }
-function jumpToEditorSection(id){ const el=$(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
-function rerenderBookEditor(){ if(!draft) return; const snapshot=structuredClone(draft); editBook(snapshot.id, snapshot); }
+function jumpToEditorSection(id){const el=$(id),sheet=$('dlg').querySelector('.sheet');if(el&&sheet)sheet.scrollTo({top:sheet.scrollTop+el.getBoundingClientRect().top-sheet.getBoundingClientRect().top-10,behavior:'smooth'});}
+function refreshEditorSummary(){if(!draft)return;const a=$('editorDisplay'),b=$('editorFormat'),c=$('editorDimensions'),d=$('stackControls');if(a)a.textContent=draft.display||'Lomo';if(b)b.textContent=draft.format||'Tapa blanda';if(c)c.textContent=`${draft.height||22} × ${draft.width||14} × ${draft.thick||3} cm`;if(d)d.hidden=draft.display!=='Apilado';drawCube();}
+function rerenderBookEditor(){refreshEditorSummary();}
 
 function openQuickActions(){
   showSheet(`
@@ -321,9 +322,9 @@ function editBook(id, override){
       <section class="editor-hero">
         <div class="preview" id="preview"><div class="cube" id="cube"></div></div>
         <div class="editor-statline">
-          <div class="editor-stat">Vista en repisa: <strong>${esc(draft.display||'Lomo')}</strong></div>
-          <div class="editor-stat">Formato: <strong>${esc(draft.format||'Tapa blanda')}</strong></div>
-          <div class="editor-stat">Medidas: <strong>${esc(draft.height||22)} × ${esc(draft.width||14)} × ${esc(draft.thick||3)} cm</strong></div>
+          <div class="editor-stat">Vista en repisa: <strong id="editorDisplay">${esc(draft.display||'Lomo')}</strong></div>
+          <div class="editor-stat">Formato: <strong id="editorFormat">${esc(draft.format||'Tapa blanda')}</strong></div>
+          <div class="editor-stat">Medidas: <strong id="editorDimensions">${esc(draft.height||22)} × ${esc(draft.width||14)} × ${esc(draft.thick||3)} cm</strong></div>
         </div>
         <div class="editor-view-tabs"><button onclick="cubeAngle=0;drawCube()">Portada</button><button onclick="cubeAngle=90;drawCube()">Lomo</button><button onclick="cubeAngle=-90;drawCube()">Canto</button><button onclick="cubeAngle=180;drawCube()">Contraportada</button></div>
         <div class="editor-jump">
@@ -363,7 +364,7 @@ function editBook(id, override){
         <h3>Cómo se verá en tu repisa</h3><div class="muted small">Elige la orientación visual del libro dentro de tu biblioteca.</div>
         <div class="field">
           <label>Mostrar en repisa</label><select onchange="draft.display=this.value;rerenderBookEditor()">${['Lomo','Portada','Canto','Apilado'].map(s=>`<option ${draft.display===s?'selected':''}>${s}</option>`).join('')}</select>
-          ${draft.display==='Apilado'?`<div class="swatch-row"><div><label>Cantidad apilada</label><input type="number" min="2" max="6" value="${draft.stackCount||3}" oninput="draft.stackCount=Math.max(2,Math.min(6,+this.value||3));drawCube()"></div><div><label>Vista de la pila</label><select onchange="draft.stackFace=this.value;drawCube()">${['Portada','Canto'].map(s=>`<option ${draft.stackFace===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`:''}
+          <div id="stackControls" ${draft.display==='Apilado'?'':'hidden'}><div class="swatch-row"><div><label>Cantidad apilada</label><input type="number" min="2" max="6" value="${draft.stackCount||3}" oninput="draft.stackCount=Math.max(2,Math.min(6,+this.value||3));drawCube()"></div><div><label>Vista de la pila</label><select onchange="draft.stackFace=this.value;drawCube()">${['Portada','Canto'].map(s=>`<option ${draft.stackFace===s?'selected':''}>${s}</option>`).join('')}</select></div></div></div>
           <div class="swatch-row">
             <div><label>Biblioteca</label><select onchange="draft.shelf=this.value">${data.shelves.map(s=>`<option value="${s.id}" ${draft.shelf===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
             <div><label>Repisa (1=superior)</label><input type="number" min="1" value="${(draft.row||0)+1}" oninput="draft.row=Math.max(0,+this.value-1)"></div>
@@ -375,11 +376,11 @@ function editBook(id, override){
         <h3>Diseño del ejemplar</h3><div class="muted small">Ajusta medidas, color del lomo y color del canto.</div>
         <div class="field">
           <div class="swatch-row">
-            <div><label>Altura (cm)</label><input type="number" step=".1" min="0.1" value="${draft.height||22}" oninput="draft.height=+this.value;drawCube()"></div>
-            <div><label>Ancho (cm)</label><input type="number" step=".1" min="0.1" value="${draft.width||14}" oninput="draft.width=+this.value;drawCube()"></div>
+            <div><label>Altura (cm)</label><input type="number" step=".1" min="0.1" value="${draft.height||22}" oninput="draft.height=+this.value;refreshEditorSummary()"></div>
+            <div><label>Ancho (cm)</label><input type="number" step=".1" min="0.1" value="${draft.width||14}" oninput="draft.width=+this.value;refreshEditorSummary()"></div>
           </div>
           <div class="swatch-row">
-            <div><label>Grosor (cm)</label><input type="number" step=".1" min="0.1" value="${draft.thick||3}" oninput="draft.thick=+this.value;drawCube()"></div>
+            <div><label>Grosor (cm)</label><input type="number" step=".1" min="0.1" value="${draft.thick||3}" oninput="draft.thick=+this.value;refreshEditorSummary()"></div>
             <div><label>Color del lomo</label><input type="color" value="${draft.color||'#7b5472'}" oninput="draft.color=this.value;drawCube()"></div>
           </div>
           <label>Color del canto</label><input type="color" value="${draft.edgeColor||'#e6dbc7'}" oninput="draft.edgeColor=this.value;drawCube()">

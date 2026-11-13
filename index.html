@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#9a3941">
   <title>Arcane Reads</title>
-  <link rel="manifest" href="site.webmanifest?v=5">
+  <link rel="manifest" href="site.webmanifest?v=5.1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -151,6 +151,28 @@
   
 /* Responsive containment: allow grid tracks and flex children to shrink. */
 html,body{max-width:100%;overflow-x:hidden} .app{width:100%;max-width:480px;overflow-x:clip} .page,.section-gap,.section-gap>*,.card,.hero-copy,.shelf-shell,.shelf-preview,.grid-2>*{min-width:0;max-width:100%} .section-gap{grid-template-columns:minmax(0,1fr)} .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))} .hero-actions{grid-template-columns:minmax(0,1fr)} .hero-actions button{width:100%;white-space:normal} .brand{min-width:0} .brand-badge{flex-shrink:0} .brand h1{font-size:clamp(23px,6vw,32px);line-height:1.08;overflow-wrap:anywhere} .topbar>.mini-btn{flex-shrink:0;max-width:110px} .tabs,.shelf-row{min-width:0;max-width:100%;overflow-x:auto} .banner{min-width:0} .banner>div{min-width:0} .banner button{flex-shrink:0} .nav{width:min(480px,100%);grid-template-columns:repeat(5,minmax(0,1fr));padding-inline:5px} .nav button{min-width:0;font-size:clamp(9px,2.65vw,12px)} .fab{z-index:35} .sheet{max-width:100%} h1,h2,h3,h4{color:var(--ink)} .hero h2,.hero h3{color:#fff} .book-cover{padding:0} .book-cover img{object-fit:contain} @media(max-width:520px){.grid-2{grid-template-columns:minmax(0,1fr)} .topbar{padding:16px 16px 12px}.hero-copy{padding-left:100px}.hero .hero-book{width:78px;height:116px}.hero-copy h2{font-size:21px}.hero-copy p{font-size:14px;line-height:1.4}.hero-copy{min-height:122px}.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.metric{padding:10px}.metric .n{font-size:25px}}
+
+/* v0.5.1: mobile editor containment and stable controls */
+#dlg{box-sizing:border-box;width:calc(100% - 20px);max-width:460px;max-height:calc(100dvh - 20px);margin:auto;overflow:hidden}
+#dlg .sheet{width:100%;max-width:100%;min-width:0;max-height:calc(100dvh - 20px);overflow-y:auto;overflow-x:hidden;padding:14px;overscroll-behavior:contain}
+#dlg .editor-shell,#dlg .editor-shell>*,#dlg .editor-hero,#dlg .editor-block,#dlg .field,#dlg .swatch-row,#dlg .swatch-row>*{min-width:0;width:100%;max-width:100%}
+#dlg .editor-shell{grid-template-columns:minmax(0,1fr)}
+#dlg .editor-hero{padding:10px}
+#dlg .editor-hero .preview{width:100%;min-width:0;height:clamp(210px,36dvh,290px)}
+#dlg .editor-view-tabs,#dlg .editor-jump{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible}
+#dlg .editor-view-tabs button,#dlg .editor-jump button{min-width:0;width:100%;white-space:normal;overflow-wrap:anywhere;font-size:12px;padding:11px 5px}
+#dlg .editor-statline{width:100%;gap:6px}
+#dlg .editor-stat{max-width:100%;white-space:normal;overflow-wrap:anywhere;font-size:11px;padding:7px 9px}
+#dlg .swatch-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+#dlg input,#dlg select,#dlg textarea{min-width:0;max-width:100%;width:100%}
+#dlg .sheet-header>div{min-width:0;overflow-wrap:anywhere}
+#dlg .sheet-close{flex:none}
+#dlg .editor-actionbar{bottom:-14px;z-index:3;padding-bottom:8px}
+#dlg .editor-save-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+#dlg .editor-save-row button{min-width:0;max-width:100%;white-space:normal}
+#dlg .editor-block{scroll-margin-top:10px}
+@media(max-width:350px){#dlg .swatch-row{grid-template-columns:minmax(0,1fr)}#dlg .sheet{padding:10px}#dlg .editor-save-row{grid-template-columns:minmax(0,1fr)}}
+
 </style>
 </head>
 <body>
@@ -364,8 +386,9 @@ function applyTheme(){
 
 function showSheet(html){ const dlg=$('dlg'); dlg.innerHTML=`<div class="sheet">${html}</div>`; if(!dlg.open) dlg.showModal(); }
 function closeSheet(){ $('dlg').close(); }
-function jumpToEditorSection(id){ const el=$(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
-function rerenderBookEditor(){ if(!draft) return; const snapshot=structuredClone(draft); editBook(snapshot.id, snapshot); }
+function jumpToEditorSection(id){const el=$(id),sheet=$('dlg').querySelector('.sheet');if(el&&sheet)sheet.scrollTo({top:sheet.scrollTop+el.getBoundingClientRect().top-sheet.getBoundingClientRect().top-10,behavior:'smooth'});}
+function refreshEditorSummary(){if(!draft)return;const a=$('editorDisplay'),b=$('editorFormat'),c=$('editorDimensions'),d=$('stackControls');if(a)a.textContent=draft.display||'Lomo';if(b)b.textContent=draft.format||'Tapa blanda';if(c)c.textContent=`${draft.height||22} × ${draft.width||14} × ${draft.thick||3} cm`;if(d)d.hidden=draft.display!=='Apilado';drawCube();}
+function rerenderBookEditor(){refreshEditorSummary();}
 
 function openQuickActions(){
   showSheet(`
@@ -485,9 +508,9 @@ function editBook(id, override){
       <section class="editor-hero">
         <div class="preview" id="preview"><div class="cube" id="cube"></div></div>
         <div class="editor-statline">
-          <div class="editor-stat">Vista en repisa: <strong>${esc(draft.display||'Lomo')}</strong></div>
-          <div class="editor-stat">Formato: <strong>${esc(draft.format||'Tapa blanda')}</strong></div>
-          <div class="editor-stat">Medidas: <strong>${esc(draft.height||22)} × ${esc(draft.width||14)} × ${esc(draft.thick||3)} cm</strong></div>
+          <div class="editor-stat">Vista en repisa: <strong id="editorDisplay">${esc(draft.display||'Lomo')}</strong></div>
+          <div class="editor-stat">Formato: <strong id="editorFormat">${esc(draft.format||'Tapa blanda')}</strong></div>
+          <div class="editor-stat">Medidas: <strong id="editorDimensions">${esc(draft.height||22)} × ${esc(draft.width||14)} × ${esc(draft.thick||3)} cm</strong></div>
         </div>
         <div class="editor-view-tabs"><button onclick="cubeAngle=0;drawCube()">Portada</button><button onclick="cubeAngle=90;drawCube()">Lomo</button><button onclick="cubeAngle=-90;drawCube()">Canto</button><button onclick="cubeAngle=180;drawCube()">Contraportada</button></div>
         <div class="editor-jump">
@@ -527,7 +550,7 @@ function editBook(id, override){
         <h3>Cómo se verá en tu repisa</h3><div class="muted small">Elige la orientación visual del libro dentro de tu biblioteca.</div>
         <div class="field">
           <label>Mostrar en repisa</label><select onchange="draft.display=this.value;rerenderBookEditor()">${['Lomo','Portada','Canto','Apilado'].map(s=>`<option ${draft.display===s?'selected':''}>${s}</option>`).join('')}</select>
-          ${draft.display==='Apilado'?`<div class="swatch-row"><div><label>Cantidad apilada</label><input type="number" min="2" max="6" value="${draft.stackCount||3}" oninput="draft.stackCount=Math.max(2,Math.min(6,+this.value||3));drawCube()"></div><div><label>Vista de la pila</label><select onchange="draft.stackFace=this.value;drawCube()">${['Portada','Canto'].map(s=>`<option ${draft.stackFace===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`:''}
+          <div id="stackControls" ${draft.display==='Apilado'?'':'hidden'}><div class="swatch-row"><div><label>Cantidad apilada</label><input type="number" min="2" max="6" value="${draft.stackCount||3}" oninput="draft.stackCount=Math.max(2,Math.min(6,+this.value||3));drawCube()"></div><div><label>Vista de la pila</label><select onchange="draft.stackFace=this.value;drawCube()">${['Portada','Canto'].map(s=>`<option ${draft.stackFace===s?'selected':''}>${s}</option>`).join('')}</select></div></div></div>
           <div class="swatch-row">
             <div><label>Biblioteca</label><select onchange="draft.shelf=this.value">${data.shelves.map(s=>`<option value="${s.id}" ${draft.shelf===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
             <div><label>Repisa (1=superior)</label><input type="number" min="1" value="${(draft.row||0)+1}" oninput="draft.row=Math.max(0,+this.value-1)"></div>
@@ -539,11 +562,11 @@ function editBook(id, override){
         <h3>Diseño del ejemplar</h3><div class="muted small">Ajusta medidas, color del lomo y color del canto.</div>
         <div class="field">
           <div class="swatch-row">
-            <div><label>Altura (cm)</label><input type="number" step=".1" min="0.1" value="${draft.height||22}" oninput="draft.height=+this.value;drawCube()"></div>
-            <div><label>Ancho (cm)</label><input type="number" step=".1" min="0.1" value="${draft.width||14}" oninput="draft.width=+this.value;drawCube()"></div>
+            <div><label>Altura (cm)</label><input type="number" step=".1" min="0.1" value="${draft.height||22}" oninput="draft.height=+this.value;refreshEditorSummary()"></div>
+            <div><label>Ancho (cm)</label><input type="number" step=".1" min="0.1" value="${draft.width||14}" oninput="draft.width=+this.value;refreshEditorSummary()"></div>
           </div>
           <div class="swatch-row">
-            <div><label>Grosor (cm)</label><input type="number" step=".1" min="0.1" value="${draft.thick||3}" oninput="draft.thick=+this.value;drawCube()"></div>
+            <div><label>Grosor (cm)</label><input type="number" step=".1" min="0.1" value="${draft.thick||3}" oninput="draft.thick=+this.value;refreshEditorSummary()"></div>
             <div><label>Color del lomo</label><input type="color" value="${draft.color||'#7b5472'}" oninput="draft.color=this.value;drawCube()"></div>
           </div>
           <label>Color del canto</label><input type="color" value="${draft.edgeColor||'#e6dbc7'}" oninput="draft.edgeColor=this.value;drawCube()">
