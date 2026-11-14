@@ -111,7 +111,7 @@ function renderBooks(){
 }
 function refreshBookResults(){const el=$("bookResults"),list=filteredBooks();if(el)el.innerHTML=list.length?`<div class="book-grid">${list.map(bookCard).join("")}</div>`:`<div class="empty">No hay libros que coincidan con tu búsqueda.</div>`;}
 function filteredBooks(){return sortBooks(data.books.filter(b=> (filters.status==='Todos'||b.status===filters.status) && [b.title,b.author,b.saga,b.collection].join(' ').toLowerCase().includes(filters.query.toLowerCase())));}
-function bookCard(book){return `<button class="book-card" onclick="openBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}${book.status==='Leyendo'&&book.pages?' · '+pct(book)+'%':''}</div>${book.status==='Leyendo'&&book.pages?bar(pct(book)):''}</button>`}
+function bookCard(book){return `<button class="book-card" onclick="bookDetails('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}${book.status==='Leyendo'&&book.pages?' · '+pct(book)+'%':''}</div>${book.status==='Leyendo'&&book.pages?bar(pct(book)):''}</button>`}
 
 function renderLibrary(){
   const shelf=activeShelf();

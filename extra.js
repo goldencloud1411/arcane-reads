@@ -3,7 +3,7 @@ const dayStr=n=>{const d=new Date();d.setDate(d.getDate()-n);return ymd(d)};
 const minsOn=d=>data.sessions.filter(s=>s.date===d).reduce((a,s)=>a+(+s.minutes||0),0);
 const QUOTES=[['Un lector vive mil vidas antes de morir. El que nunca lee vive solo una.','George R.R. Martin'],['Un libro es un sueño que sostienes en tus manos.','Neil Gaiman']];
 const chart=(v,l)=>{const m=Math.max(1,...v);return `<div class="bars">${v.map((x,i)=>`<div class="bc"><em>${x||''}</em><i style="height:${Math.max(x?6:2,x/m*100)}%"></i><span>${l[i]}</span></div>`).join('')}</div>`};
-const hb=b=>`<button class="hbook" onclick="openBook('${b.id}')"><div class="hcov">${coverHtml(b)}</div><b>${esc(b.title)}</b><span>${esc(b.author||'')}</span></button>`;
+const hb=b=>`<button class="hbook" onclick="bookDetails('${b.id}')"><div class="hcov">${coverHtml(b)}</div><b>${esc(b.title)}</b><span>${esc(b.author||'')}</span></button>`;
 const finished=b=>b.finished||'';
 (function(){const sb=saveBook;saveBook=function(){if(draft&&draft.status==='Leído'&&!draft.finished)draft.finished=today();sb()};
 const ss=saveSession;saveSession=function(){const b=getBook($('sessBook').value);ss();if(b&&b.status==='Leído'&&!b.finished){b.finished=today();save()}}})();
@@ -44,7 +44,7 @@ function openReadingSession(id){let acc=0,st=0,t=null;const f=s=>`${String(s/60|
 
 const _rb=renderBooks;let bt='Para ti';
 const grp=k=>{const m={};data.books.forEach(b=>String(b[k]||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>(m[n]=m[n]||[]).push(b)));return Object.entries(m)};
-const stack=([n,bs])=>`<div class="saga"><div class="sg">${bs.slice(0,3).map(b=>`<div class="hcov">${coverHtml(b)}</div>`).join('')}</div><b>${esc(n)}</b><span>${bs.length} libro${bs.length>1?'s':''}</span></div>`;
+const stack=([n,bs],k)=>`<button class="saga" data-n="${esc(n)}" onclick="openGroup('${k}',this.dataset.n)"><div class="sg">${bs.slice(0,3).map(b=>`<div class="hcov">${coverHtml(b)}</div>`).join('')}</div><b>${esc(n)}</b><span>${bs.length} libro${bs.length>1?'s':''}</span></button>`;
 renderBooks=function(){
   const all=bt==='Todos',w=all?_rb():document.createElement('div');if(!all){w.className='section-gap';w.innerHTML='<section><div class="label-row"><h2>Tus libros</h2><button class="mini-btn" onclick="openAddBookFlow()">+ Añadir</button></div></section>'}
   const c=document.createElement('div');c.className='tabs';c.innerHTML=[['Para ti','Para ti'],['Leyendo',`Leyendo ahora · ${readingBooks().length}`],['Por leer',`Por leer · ${unreadBooks().length}`],['Todos','Todos']].map(([k,t])=>`<button class="chip ${bt===k?'active':''}" onclick="bt='${k}';render()">${t}</button>`).join('');w.prepend(c);
@@ -54,8 +54,8 @@ renderBooks=function(){
   w.insertAdjacentHTML('beforeend',`
   <section class="card"><div class="label-row"><h2>Lo próximo</h2><button class="mini-btn" onclick="spinRoulette()">🎲 Girar</button></div>${q.length?`<div class="hrow">${q.map(hb).join('')}</div>`:'<div class="muted small">Aún no hay nada en la cola. Gira la ruleta para llenarla.</div>'}</section>
   <section><div class="label-row"><h2>Por leer</h2><button class="link-btn" onclick="bt='Por leer';render()">Ver todo ›</button></div>${u.length?`<div class="hrow">${u.map(hb).join('')}</div>`:'<div class="empty">Nada pendiente. ¡Añade un libro!</div>'}</section>
-  <section><h2>Sagas</h2>${sg.length?`<div class="hrow">${sg.map(stack).join('')}</div>`:'<div class="empty">Escribe la saga al editar un libro y se agruparán aquí.</div>'}</section>
-  <section><h2>Colecciones</h2>${co.length?`<div class="hrow">${co.map(stack).join('')}</div>`:'<div class="empty">Escribe una colección al editar un libro y se agruparán aquí.</div>'}</section>`);
+  <section><h2>Sagas</h2>${sg.length?`<div class="hrow">${sg.map(g=>stack(g,'saga')).join('')}</div>`:'<div class="empty">Escribe la saga al editar un libro y se agruparán aquí.</div>'}</section>
+  <section><h2>Colecciones</h2>${co.length?`<div class="hrow">${co.map(g=>stack(g,'collection')).join('')}</div>`:'<div class="empty">Escribe una colección al editar un libro y se agruparán aquí.</div>'}</section>`);
   return w};
 
 const _rs=renderStats;let stat={p:'Mensual',m:'Páginas'};

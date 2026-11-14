@@ -319,6 +319,34 @@ dialog.cropdlg{width:100%;max-width:100vw;height:100dvh;max-height:100dvh;margin
 .page .section-gap>*{animation:rise .38s both}.section-gap>*:nth-child(2){animation-delay:.04s}.section-gap>*:nth-child(3){animation-delay:.08s}.section-gap>*:nth-child(4){animation-delay:.12s}.section-gap>*:nth-child(n+5){animation-delay:.16s}
 button:active{transform:scale(.97)}
 @media(prefers-reduced-motion:reduce){.page .section-gap>*,#splash img{animation:none}}
+
+/* v1.2 */
+.saga{background:none;border:0;color:inherit;text-align:left;padding:0}
+#dlg.pull{animation:dlgfade .4s both}#dlg.pull::backdrop{background:transparent}
+.pull .vt,.pull .vbar,.pull .vx{animation:rise .5s .32s both}
+@keyframes dlgfade{from{opacity:0}to{opacity:1}}
+#dlg.detfull{position:fixed;inset:0;width:100%;max-width:none;height:auto;max-height:none;margin:0;background:var(--card)}
+#dlg.detfull .sheet{height:100%;max-height:none;padding:0;border:0;border-radius:0;box-shadow:none;overflow-y:auto}
+.dt{position:relative;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.dt-hero{position:relative;text-align:center;padding:calc(64px + env(safe-area-inset-top,0px)) 20px 26px;overflow:hidden;color:#fff}
+.dt-bg{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(26px) saturate(1.2) brightness(.62);z-index:0}
+.dt-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,var(--card));z-index:1}
+.dt-hero>*:not(.dt-bg):not(.dt-x){position:relative;z-index:2}.dt-hero h2{color:#fff}
+.dt-x{position:absolute!important;top:calc(12px + env(safe-area-inset-top,0px));left:14px;z-index:5}
+.dt-cov{width:150px;height:222px;margin:0 auto 16px;border-radius:6px 12px 12px 6px;overflow:hidden;box-shadow:10px 14px 30px rgba(0,0,0,.5),inset 4px 0 0 rgba(255,255,255,.2);transform:perspective(700px) rotateY(-8deg);background:#ddd0bf}
+.dt-cov img{width:100%;height:100%;object-fit:cover}
+.dt-hero h2{font-size:30px;line-height:1.05;text-shadow:0 2px 12px rgba(0,0,0,.4)}.dt-au{opacity:.9;margin:6px 0 12px}
+.dt-meta{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+.dt-stars i{font-style:normal;font-size:20px;color:rgba(255,255,255,.35)}.dt-stars i.on{color:#e6bf4e}
+.stp{background:#e6bf4e;color:#2b2210;border-radius:999px;padding:5px 13px;font-size:13px;font-weight:700}.stp.ghost{background:rgba(255,255,255,.18);color:#fff}
+.dt-body{padding:6px 20px 0;display:grid;gap:14px}.dt-body h3{margin:6px 0 -4px}
+.dt-card{background:var(--accent-soft);border-radius:18px;padding:14px}
+.dt-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.tl{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:12px;min-width:0}.tl b{display:block;font-size:17px;overflow-wrap:anywhere}.tl span{font-size:12px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tg{background:var(--accent-soft);color:var(--accent);border:0;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600}.saga-t{background:var(--accent);color:#fff}.col-t{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.dt-note{border-left:3px solid var(--accent);padding-left:12px}
+.dt-bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--card) 30%);z-index:6}.dt-bar .btn-soft{flex:1}.dt-bar .ic{width:19px;height:19px}
+.gg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}.gg .hbook{flex:none;width:auto}.gg .hcov{height:auto;aspect-ratio:2/3}
 </style>
 </head>
 <body><div id="splash"><img src="icon-192.png" alt=""></div><script>setTimeout(function(){var s=document.getElementById("splash");s&&s.remove()},5000)</script>
@@ -330,6 +358,6 @@ button:active{transform:scale(.97)}
 </div>
 <dialog id="dlg"></dialog>
 <input type="file" id="importer" hidden accept=".csv,.json">
-<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=11.0"></script>
+<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=12.0"></script><script src="extra5.js?v=12.0"></script>
 </body>
 </html>
