@@ -10,7 +10,10 @@ const _ob3=openBook;openBook=function(id){const tap=window.__tap&&Date.now()-win
   st.animate([{transform:`translate(${dx}px,${dy}px) scale(${s})`},{transform:`translate(${dx*.55}px,${dy*.55-22}px) scale(${s+(1-s)*.4})`,offset:.32},{transform:'none'}],{duration:780,easing:'cubic-bezier(.22,.8,.24,1)'});
   requestAnimationFrame(()=>{c.style.transition='transform .78s cubic-bezier(.22,.8,.24,1)';cubeAngle=-20;drawCube();setTimeout(()=>{c.style.transition=''},900)})};
 /* ficha de detalles */
-const tagsOf=b=>[...new Set(String(b.categories||'').split(/[\/,;]/).map(s=>s.trim()).filter(s=>s&&s.length<34))].slice(0,12);
+const splitList=v=>[...new Set(String(v||'').split(/[\/,;]/).map(s=>s.trim()).filter(Boolean))];
+const tagsOf=b=>splitList(b.categories).filter(s=>s.length<40).slice(0,24);
+const listOf=(b,k)=>k==='tags'?(Array.isArray(b.tags)?b.tags:[]):k==='categories'?splitList(b.categories):String(b[k]||'').split(',').map(s=>s.trim()).filter(Boolean);
+const pubTxt=b=>{if(b.pubDate){const d=new Date(b.pubDate+'T12:00:00Z');if(!isNaN(d))return d.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})}return b.year||''};
 const starsRO=n=>[1,2,3,4,5].map(i=>`<i class="${(n||0)>=i?'on':''}">★</i>`).join('');
 bookDetails=function(id){const b=getBook(id);if(!b)return;const draw=()=>{
   const ss=data.sessions.filter(s=>s.bookId===id),pg=ss.reduce((a,s)=>a+(+s.pages||0),0),mn=ss.reduce((a,s)=>a+(+s.minutes||0),0),first=ss.map(s=>s.date).sort()[0],notes=(data.notes||[]).filter(n=>n.bookId===id),tg=tagsOf(b),cols=String(b.collection||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -20,8 +23,10 @@ bookDetails=function(id){const b=getBook(id);if(!b)return;const draw=()=>{
    <div class="dt-meta"><span class="dt-stars">${starsRO(b.rating)}</span><span class="stp">${esc(b.status||'Por leer')}</span>${b.format?`<span class="stp ghost">${esc(b.format)}</span>`:''}</div></div>
   <div class="dt-body">
    ${b.pages?`<div class="dt-card"><div class="label-row"><b>Progreso</b><span class="muted small">Página ${b.current||0} de ${b.pages} · ${pct(b)}%</span></div>${bar(pct(b))}</div>`:''}
-   <div class="dt-stats">${tile('Páginas',b.pages)}${tile('Año',b.year)}${tile('Editorial',b.publisher)}${tile('ISBN',b.isbn)}</div>
-   ${(tg.length||b.saga||cols.length)?`<h3>Géneros y etiquetas</h3><div class="tags">${b.saga?`<button class="tg saga-t" onclick="openGroup('saga',this.dataset.n)" data-n="${esc(b.saga)}">✦ ${esc(b.saga)}</button>`:''}${tg.map(t=>`<span class="tg">${esc(t)}</span>`).join('')}${cols.map(t=>`<button class="tg col-t" onclick="openGroup('collection',this.dataset.n)" data-n="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
+   <div class="dt-stats">${tile('Páginas',b.pages)}${tile('Publicado',pubTxt(b))}${tile('Editorial',b.publisher)}${tile('Idioma',b.language)}${tile('ISBN',b.isbn)}${tile('ASIN',b.asin)}${b.grRating?tile((b.grRatings?Number(b.grRatings).toLocaleString('es')+' valoraciones':'Goodreads'),'★ '+Number(b.grRating).toFixed(2)):''}</div>
+   ${(b.saga||cols.length)?`<h3>Saga y colección</h3><div class="tags">${b.saga?`<button class="tg saga-t" onclick="openGroup('saga',this.dataset.n)" data-n="${esc(b.saga)}">✦ ${esc(b.saga)}${b.sagaN?' · #'+esc(String(b.sagaN)):''}</button>`:''}${cols.map(t=>`<button class="tg col-t" onclick="openGroup('collection',this.dataset.n)" data-n="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
+   ${tg.length?`<h3>Géneros</h3><div class="tags">${tg.map(t=>`<button class="tg" onclick="openGroup('categories',this.dataset.n)" data-n="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
+   <h3>Etiquetas</h3><div class="tags">${(b.tags||[]).map(t=>`<button class="tg tag-u" onclick="openGroup('tags',this.dataset.n)" data-n="${esc(t)}">${esc(t)}</button>`).join('')}<button class="tg add-t" onclick="addTagTo('${id}')">+ Etiqueta</button></div>
    <h3>Sinopsis</h3>${b.description?`<p class="dtxt" style="white-space:pre-line">${esc(b.description)}</p><button class="link-btn" onclick="const p=this.previousElementSibling;p.classList.toggle('open');this.textContent=p.classList.contains('open')?'Leer menos':'Leer más'">Leer más</button>`:'<p class="muted" id="dwait">Buscando la sinopsis oficial…</p>'}
    ${ss.length?`<h3>Tu lectura</h3><div class="dt-stats">${tile('Sesiones',ss.length)}${tile('Páginas leídas',pg)}${tile('Minutos',mn)}${tile('Desde',first)}</div>`:''}
    ${b.notes?`<h3>Mi reseña</h3><p style="white-space:pre-line">${esc(b.notes)}</p>`:''}
@@ -31,6 +36,8 @@ bookDetails=function(id){const b=getBook(id);if(!b)return;const draw=()=>{
   $('dlg').classList.add('detfull')};
   draw();if(!b.description)enrich(b).then(()=>{if(b.description&&$('dwait'))draw();else if($('dwait'))$('dwait').textContent='No encontré sinopsis. Puedes escribirla en Editar.'})};
 /* sagas y colecciones abribles */
-function openGroup(kind,name){const l=data.books.filter(b=>String(b[kind]||'').split(',').map(s=>s.trim()).includes(name)),done=l.filter(b=>b.status==='Leído').length;
-  showSheet(`<div class="sheet-header"><div><div class="eyebrow">${kind==='saga'?'Saga':'Colección'}</div><h2>${esc(name)}</h2><div class="muted small">${l.length} libro${l.length>1?'s':''} · ${done} leído${done===1?'':'s'}</div></div><button class="sheet-close" onclick="closeSheet()">×</button></div>${bar(l.length?Math.round(done/l.length*100):0)}
+function openGroup(kind,name){const l=data.books.filter(b=>listOf(b,kind).includes(name)),done=l.filter(b=>b.status==='Leído').length;
+  showSheet(`<div class="sheet-header"><div><div class="eyebrow">${{saga:'Saga',tags:'Etiqueta',categories:'Género'}[kind]||'Colección'}</div><h2>${esc(name)}</h2><div class="muted small">${l.length} libro${l.length>1?'s':''} · ${done} leído${done===1?'':'s'}</div></div><button class="sheet-close" onclick="closeSheet()">×</button></div>${bar(l.length?Math.round(done/l.length*100):0)}
   <div class="gg">${l.map(b=>`<button class="hbook" onclick="bookDetails('${b.id}')"><div class="hcov">${coverHtml(b)}</div><b>${esc(b.title)}</b><span>${esc(b.status||'')}${b.status==='Leyendo'&&b.pages?' · '+pct(b)+'%':''}</span></button>`).join('')||'<div class="empty">Sin libros.</div>'}</div>`)}
+
+function addTagTo(id){const b=getBook(id);if(!b)return;const t=(prompt('Nueva etiqueta')||'').replace(/,/g,' ').trim().slice(0,40);if(!t)return;b.tags=Array.isArray(b.tags)?b.tags:[];if(!b.tags.some(x=>x.toLowerCase()===t.toLowerCase()))b.tags.push(t);save();bookDetails(id)}

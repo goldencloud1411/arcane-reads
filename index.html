@@ -347,6 +347,22 @@ button:active{transform:scale(.97)}
 .dt-note{border-left:3px solid var(--accent);padding-left:12px}
 .dt-bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--card) 30%);z-index:6}.dt-bar .btn-soft{flex:1}.dt-bar .ic{width:19px;height:19px}
 .gg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}.gg .hbook{flex:none;width:auto}.gg .hcov{height:auto;aspect-ratio:2/3}
+
+/* v1.3 — libros pegados a la madera, sin huecos ni scroll horizontal */
+.shelf-row{gap:0!important;padding:0!important;overflow:visible!important;align-items:flex-end}
+.shelf-pack{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0;visibility:hidden}
+.shelf-book{box-shadow:3px 0 6px rgba(0,0,0,.45)!important}
+.shelf-book.stack-book{box-shadow:none!important}
+.shelf-empty{opacity:.45;padding:12px 6px;font-style:italic;align-self:center}
+.shelf-preview .shelf-row{margin-top:0}
+/* v1.4 — etiquetas */
+.tag-u{background:transparent;border:1px solid var(--accent);color:var(--accent)}.add-t{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+.tgc{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:5px 6px 5px 11px;font-size:13px;font-weight:600}
+.tgc button{background:none;border:0;color:inherit;font-size:16px;line-height:1;padding:0 4px;opacity:.7}
+.tgin{flex:1;min-width:110px;border:0!important;background:transparent!important;padding:6px 4px!important;box-shadow:none!important;outline:none}
+.tgsug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tgsug button{background:transparent;border:1px dashed var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted)}
+#grSyncMsg{margin:6px 0 2px}
 </style>
 </head>
 <body><div id="splash"><img src="icon-192.png" alt=""></div><script>setTimeout(function(){var s=document.getElementById("splash");s&&s.remove()},5000)</script>
@@ -358,6 +374,6 @@ button:active{transform:scale(.97)}
 </div>
 <dialog id="dlg"></dialog>
 <input type="file" id="importer" hidden accept=".csv,.json">
-<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=12.0"></script><script src="extra5.js?v=12.0"></script>
+<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=12.0"></script><script src="extra5.js?v=12.0"></script><script src="extra6.js?v=13.0"></script><script src="extra7.js?v=14.0"></script>
 </body>
 </html>
