@@ -3,7 +3,7 @@ const dayStr=n=>{const d=new Date();d.setDate(d.getDate()-n);return ymd(d)};
 const minsOn=d=>data.sessions.filter(s=>s.date===d).reduce((a,s)=>a+(+s.minutes||0),0);
 const QUOTES=[['Un lector vive mil vidas antes de morir. El que nunca lee vive solo una.','George R.R. Martin'],['Un libro es un sueño que sostienes en tus manos.','Neil Gaiman']];
 const chart=(v,l)=>{const m=Math.max(1,...v);return `<div class="bars">${v.map((x,i)=>`<div class="bc"><em>${x||''}</em><i style="height:${Math.max(x?6:2,x/m*100)}%"></i><span>${l[i]}</span></div>`).join('')}</div>`};
-const hb=b=>`<button class="hbook" onclick="editBook('${b.id}')"><div class="hcov">${coverHtml(b)}</div><b>${esc(b.title)}</b><span>${esc(b.author||'')}</span></button>`;
+const hb=b=>`<button class="hbook" onclick="openBook('${b.id}')"><div class="hcov">${coverHtml(b)}</div><b>${esc(b.title)}</b><span>${esc(b.author||'')}</span></button>`;
 const finished=b=>b.finished||'';
 (function(){const sb=saveBook;saveBook=function(){if(draft&&draft.status==='Leído'&&!draft.finished)draft.finished=today();sb()};
 const ss=saveSession;saveSession=function(){const b=getBook($('sessBook').value);ss();if(b&&b.status==='Leído'&&!b.finished){b.finished=today();save()}}})();

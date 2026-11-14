@@ -111,7 +111,7 @@ function renderBooks(){
 }
 function refreshBookResults(){const el=$("bookResults"),list=filteredBooks();if(el)el.innerHTML=list.length?`<div class="book-grid">${list.map(bookCard).join("")}</div>`:`<div class="empty">No hay libros que coincidan con tu búsqueda.</div>`;}
 function filteredBooks(){return sortBooks(data.books.filter(b=> (filters.status==='Todos'||b.status===filters.status) && [b.title,b.author,b.saga,b.collection].join(' ').toLowerCase().includes(filters.query.toLowerCase())));}
-function bookCard(book){return `<button class="book-card" onclick="editBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}${book.status==='Leyendo'&&book.pages?' · '+pct(book)+'%':''}</div>${book.status==='Leyendo'&&book.pages?bar(pct(book)):''}</button>`}
+function bookCard(book){return `<button class="book-card" onclick="openBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}${book.status==='Leyendo'&&book.pages?' · '+pct(book)+'%':''}</div>${book.status==='Leyendo'&&book.pages?bar(pct(book)):''}</button>`}
 
 function renderLibrary(){
   const shelf=activeShelf();
@@ -144,9 +144,9 @@ function shelfBookHtml(book){
     const stackWidth=Math.max(68,(book.width||14)*5.9);
     const layerHeight=Math.max(16,Math.min(24,(book.thick||3)*4.5));
     const layerSrc=book.stackFace==='Canto'?(book.edge||''):(book.cover||book.spine||'');
-    return `<button class="shelf-book stack-book" onclick="editBook('${book.id}')" style="height:${layerHeight*layers+(layers-1)*5}px;width:${stackWidth}px;--stack-color:${book.stackFace==='Canto'?(book.edgeColor||'#e6dbc7'):(book.color||'#7b5d7b')}">${Array.from({length:layers},(_,i)=>`<div class="stack-layer" style="height:${layerHeight}px;transform:translateX(${Math.min(i*4,12)}px)">${layerSrc?`<img src="${layerSrc}" alt="">`:`<div class="stack-label">${esc(book.title||'Libro')}</div>`}</div>`).join('')}</button>`;
+    return `<button class="shelf-book stack-book" onclick="openBook('${book.id}')" style="height:${layerHeight*layers+(layers-1)*5}px;width:${stackWidth}px;--stack-color:${book.stackFace==='Canto'?(book.edgeColor||'#e6dbc7'):(book.color||'#7b5d7b')}">${Array.from({length:layers},(_,i)=>`<div class="stack-layer" style="height:${layerHeight}px;transform:translateX(${Math.min(i*4,12)}px)">${layerSrc?`<img src="${layerSrc}" alt="">`:`<div class="stack-label">${esc(book.title||'Libro')}</div>`}</div>`).join('')}</button>`;
   }
-  return `<button class="shelf-book" onclick="editBook('${book.id}')" style="height:${h}px;width:${w}px;background:${edge?(book.edgeColor||'#e6dbc7'):(book.color||'#7b5d7b')}">${src?`<img src="${src}" alt="">`:`<span>${spineLabel(book)}</span>`}</button>`;
+  return `<button class="shelf-book" onclick="openBook('${book.id}')" style="height:${h}px;width:${w}px;background:${edge?(book.edgeColor||'#e6dbc7'):(book.color||'#7b5d7b')}">${src?`<img src="${src}" alt="">`:`<span>${spineLabel(book)}</span>`}</button>`;
 }
 
 function renderStats(){
@@ -543,7 +543,7 @@ async function searchGoodreads(q){
   throw new Error('Goodreads no disponible');
 }
 const FACE_ASPECT=()=>{const h=draft.height||22,w=draft.width||14,t=draft.thick||3;return{cover:w/h,back:w/h,spine:t/h,edge:t/h,top:w/t,bottom:w/t}};
-function pickFace(key,input){const f=input.files[0];input.value='';if(!f)return;cropImage(f,FACE_ASPECT()[key]).then(x=>{if(x){draft[key]=x;drawCube();toast('Foto ajustada')}})}
+function pickFace(key,input){const f=input.files[0];input.value='';if(!f)return;cropImage(f,FACE_ASPECT()[key]).then(x=>{if(x){draft[key]=x;drawCube();toast('Foto ajustada');window.onFaceSaved&&onFaceSaved()}})}
 function cropImage(file,aspect){return new Promise(resolve=>{
   const img=new Image(),url=URL.createObjectURL(file);
   img.onerror=()=>{URL.revokeObjectURL(url);toast('No pude abrir esa imagen');resolve(null)};

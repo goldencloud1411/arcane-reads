@@ -265,6 +265,40 @@ dialog.cropdlg{width:100%;max-width:100vw;height:100dvh;max-height:100dvh;margin
 .timer{font-family:var(--font-title);font-size:72px;text-align:center;margin:20px 0}
 .seg4{grid-template-columns:repeat(4,1fr)!important}.metric-grid{grid-template-columns:repeat(3,1fr)!important}.metric{text-align:left;color:inherit;font:inherit}.metric.sel{border:2px solid var(--accent);background:var(--accent-soft)}.metric .n{font-size:28px}
 .tabs{padding:4px 0 10px}
+
+/* v0.9 visor y editor */
+.stack-book::after{display:none}.stack-book{gap:0}
+.sly{position:relative;overflow:hidden;border-radius:3px 5px 5px 3px;margin-top:-1px;box-shadow:0 3px 4px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 0 rgba(0,0,0,.3)}.sly::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.2),transparent 40%,rgba(0,0,0,.28));pointer-events:none}
+.sl{position:absolute;left:10px;top:50%;transform:translateY(-50%);font:600 9px var(--font-title);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85%}
+#dlg.edfull{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;background:radial-gradient(circle at 25% 18%,#3b4a8f,transparent 55%),radial-gradient(circle at 80% 65%,#6a3a6a,transparent 50%),#0b0d1f;color:#fff;overflow:hidden}
+#dlg.edfull::backdrop{background:#000}
+#dlg.edfull .sheet{position:relative;height:100dvh;max-height:100dvh;padding:0;background:none;border:0;border-radius:0;box-shadow:none;overflow:hidden;color:#fff}
+.vw{position:absolute;inset:0}
+.edtop,.vw>.vx{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:14px;z-index:5}.edtop{right:14px;display:flex;justify-content:space-between}
+.vx{width:44px;height:44px;border-radius:50%;border:0;background:#f1e7dc;color:#333;font-size:24px}
+.edtop .gold{background:#e6bf4e;color:#2b2210;border:0;border-radius:999px;padding:0 22px;height:44px;font-weight:700;font-size:16px}
+.edstage{position:absolute;inset:0 0 140px 0;display:grid;place-items:center}
+#dlg.edfull .preview{background:none;height:auto;min-height:340px;width:100%;overflow:visible;zoom:1.5;border-radius:0}
+.vt{position:absolute;left:0;right:0;bottom:calc(120px + env(safe-area-inset-bottom,0px));text-align:center;display:grid;gap:6px;justify-items:center}.vt b{font-family:var(--font-title);font-size:25px}.vt span{color:#cfc3ba}
+.pill{background:#2b2420;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:12px 22px;font-weight:600;margin-top:6px}
+.vbar{position:absolute;left:14px;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.vbar button{background:rgba(120,110,105,.7);color:#fff;border:0;border-radius:18px;height:84px;display:grid;place-items:center;font-size:24px;padding:8px 0 4px;backdrop-filter:blur(8px)}.vbar small{font-size:13px;font-weight:600}.vbar .y{background:#e6bf4e;color:#2b2210}
+.edbar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;gap:4px;background:#2a2320;border-radius:30px;padding:8px;z-index:7}
+.edbar button{width:56px;height:52px;border-radius:22px;border:0;background:none;color:#e9dcd0;font-size:22px}.edbar .on{background:#4d423b}
+.pop{position:absolute;left:14px;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));max-height:56dvh;overflow:auto;background:rgba(42,35,32,.97);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:16px;z-index:6;color:#fff}
+.pop h4{margin:12px 0 8px;font-size:14px;color:#cdbfb3;font-weight:600}.pop h4:first-child{margin-top:0}.pop h3{color:#fff}.pop .muted{color:#bcaea7}
+.pop input,.pop select,.pop textarea{background:#3a312d;color:#fff;border:1px solid #55493f}
+.pop .editor-block{background:none;border:0;box-shadow:none;padding:6px 0 14px}.pop .editor-actionbar{position:static;background:none}
+.pop .chips{display:flex;gap:8px;flex-wrap:wrap}.pop .chip{background:#3a312d;color:#fff;border:0;padding:9px 14px}.pop .chip.active{background:#e6bf4e;color:#2b2210}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.row3 label{font-size:12px;color:#cdbfb3}
+.faces{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.fb{background:none;border:0;color:#d9cbbf;display:grid;gap:6px;justify-items:center;padding:8px 2px;border-radius:14px;font-size:12px}.fb.on{background:#4d423b}
+.ft{width:54px;height:72px;border-radius:5px;background:#5a4f48 center/cover;position:relative}.ft b{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;background:#e6bf4e;color:#2b2210;font-size:12px;display:grid;place-items:center}
+.act{display:flex;justify-content:space-between;align-items:center;padding:17px 4px;border:0;border-bottom:1px solid rgba(255,255,255,.1);background:none;color:#fff;font-size:17px;width:100%;text-align:left}.act.red{color:#f09a9a;border:0}
+.det{display:flex;gap:14px}.dtxt{display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5}.dtxt.open{-webkit-line-clamp:unset;display:block}
+.stack-book{box-shadow:none!important;background:none!important}
+.sly .sl{writing-mode:horizontal-tb!important;transform:translateY(-50%)!important;position:absolute;display:block;padding:0}
+.edtop~.edstage{inset:64px 0 auto 0;height:40dvh}
 </style>
 </head>
 <body>
@@ -276,6 +310,6 @@ dialog.cropdlg{width:100%;max-width:100vw;height:100dvh;max-height:100dvh;margin
 </div>
 <dialog id="dlg"></dialog>
 <input type="file" id="importer" hidden accept=".csv,.json">
-<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script>
+<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=9.0"></script>
 </body>
 </html>
