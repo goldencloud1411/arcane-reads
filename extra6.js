@@ -2,7 +2,7 @@
 (function(){
 const esc2=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skey=s=>String(s||'').trim().toLowerCase();
-const LAYOUTS=[['saga','Por saga (cada saga junta)'],['auto','Automático (llena cada repisa)'],['manual','Manual (tú eliges la repisa)']];
+const LAYOUTS=[['color','Arcoíris (por color del lomo)'],['title','Por título (A–Z)'],['author','Por autor (A–Z)'],['saga','Por saga (cada saga junta)'],['auto','Automático (llena cada repisa)'],['manual','Manual (tú eliges la repisa)']];
 
 /* orden de los libros antes de medirlos */
 function ordered(books,mode){
@@ -16,6 +16,8 @@ function ordered(books,mode){
     loose.forEach(b=>out.push([b,'']));
     return out;
   }
+  if(mode==='color'){const hue=b=>{const h=(b.color||'#7b5d7b').replace('#',''),r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,bl=parseInt(h.slice(4,6),16)/255,mx=Math.max(r,g,bl),mn=Math.min(r,g,bl),d=mx-mn,l=(mx+mn)/2;if(d<.09)return l-2;const x=mx===r?((g-bl)/d+6)%6:mx===g?(bl-r)/d+2:(r-g)/d+4;return x/6};return books.slice().sort((a,b)=>hue(a)-hue(b)).map(b=>[b,''])}
+  if(mode==='title'||mode==='author'){const k=b=>String(mode==='title'?b.title:(b.author||'~')).toLowerCase();return books.slice().sort((a,b)=>k(a).localeCompare(k(b),'es')).map(b=>[b,''])}
   return books.slice().sort((a,b)=>(a.row||0)-(b.row||0)||idx.get(a.id)-idx.get(b.id)).map(b=>[b,'']);
 }
 
@@ -73,7 +75,7 @@ function pack(items,avail,mode){
     [...byRow.keys()].sort((a,b)=>a-b).forEach(r=>{while(out.length<r)out.push([]); const sub=pack(byRow.get(r),avail,'auto'); sub.forEach(s=>out.push(s))});
     return out;
   }
-  if(mode==='auto'){items.forEach(put);return rows}
+  if(mode!=='saga'){items.forEach(put);return rows}
   /* saga: una saga completa cabe en una repisa; si no, pasa a la siguiente (los sueltos rellenan huecos) */
   const sagas=[], loose=[]; const m=new Map();
   items.forEach(it=>{if(it.u){if(!m.has(it.u)){m.set(it.u,[]);sagas.push(m.get(it.u))}m.get(it.u).push(it)}else loose.push(it)});
