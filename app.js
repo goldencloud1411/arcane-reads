@@ -1,11 +1,16 @@
-
 let db;
 const $ = id=>document.getElementById(id);
 const esc = x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const uid = ()=>crypto.randomUUID?.() || (Date.now().toString(36)+Math.random().toString(36).slice(2));
-const today = ()=>new Date().toISOString().slice(0,10);
+const ymd=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const today = ()=>ymd(new Date());
+const greeting=()=>{const h=new Date().getHours();return h<6?'Buenas noches':h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'};
+const pct=b=>b.pages?Math.min(100,Math.round((b.current||0)/b.pages*100)):0;
+const bar=p=>`<div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><i style="width:${p}%"></i></div>`;
+function toast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
+function sortBooks(l){const k=filters.sort||'recent',c=(a,b)=>String(a||'').localeCompare(String(b||''),'es');return k==='title'?l.sort((a,b)=>c(a.title,b.title)):k==='author'?l.sort((a,b)=>c(a.author,b.author)):k==='rating'?l.sort((a,b)=>(b.rating||0)-(a.rating||0)):l.slice().reverse()}
 const monthName = ()=>new Intl.DateTimeFormat('es-PE',{month:'long',year:'numeric'}).format(new Date());
-let tab='Inicio', shelfId='default', draft=null, cubeAngle=-22, filters={status:'Todos',query:''};
+let tab='Inicio', shelfId='default', draft=null, cubeAngle=-22, filters={status:'Todos',query:'',sort:'recent'};
 let data={
   profile:{name:'Valeria',theme:'classic'},
   theme:'classic',
@@ -20,7 +25,7 @@ const STATUS = ['Todos','Por leer','Leyendo','Leído','Abandonado'];
 const BOOK_SHELF_MAP = {'to-read':'Por leer','currently-reading':'Leyendo','read':'Leído'};
 
 function openDB(){return new Promise((res,rej)=>{const req=indexedDB.open('ArcaneReadsV2',1);req.onupgradeneeded=()=>req.result.createObjectStore('state');req.onsuccess=()=>{db=req.result;res()};req.onerror=()=>rej(req.error)})}
-function load(){return new Promise(resolve=>{const q=db.transaction('state').objectStore('state').get('app');q.onsuccess=()=>{if(q.result) data=q.result;resolve()};q.onerror=()=>resolve()})}
+function load(){return new Promise(resolve=>{const q=db.transaction('state').objectStore('state').get('app');q.onsuccess=()=>{if(q.result) data={...data,...q.result,settings:{...data.settings,...(q.result.settings||{})},profile:{...data.profile,...(q.result.profile||{})}};resolve()};q.onerror=()=>resolve()})}
 function save(){return new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put(data,'app');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 function rerender(){render();save().catch(console.error)}
 function activeShelf(){return data.shelves.find(s=>s.id===shelfId)||data.shelves[0]}
@@ -31,12 +36,7 @@ function unreadBooks(){return data.books.filter(b=>b.status==='Por leer')}
 function totalPagesRead(){return data.sessions.reduce((a,s)=>a+(+s.pages||0),0)}
 function totalMinutes(){return data.sessions.reduce((a,s)=>a+(+s.minutes||0),0)}
 function readDaysThisMonth(){const month=today().slice(0,7);return new Set(data.sessions.filter(s=>s.date.startsWith(month)).map(s=>s.date)).size}
-function streakDays(){
-  const dates=[...new Set(data.sessions.map(s=>s.date))].sort(); if(!dates.length) return 0;
-  let streak=0; let cursor=new Date();
-  for(;;){ const d=cursor.toISOString().slice(0,10); if(dates.includes(d)){ streak++; cursor.setDate(cursor.getDate()-1); } else { if(streak===0) cursor.setDate(cursor.getDate()-1); else break; if(!dates.includes(cursor.toISOString().slice(0,10))) break; }}
-  return streak;
-}
+function streakDays(){const set=new Set(data.sessions.map(s=>s.date)),d=new Date();if(!set.has(ymd(d)))d.setDate(d.getDate()-1);let n=0;while(set.has(ymd(d))){n++;d.setDate(d.getDate()-1)}return n}
 function setTab(next){tab=next;render()}
 
 function coverHtml(book, cls=''){return book.cover?`<img class="${cls}" src="${book.cover}" alt="">`:`<div class="${cls}" style="display:grid;place-items:center;color:#674e45;font-family:var(--font-title);height:100%">✦<br>${esc(book.title||'Libro')}</div>`}
@@ -57,7 +57,7 @@ function render(){
 function renderTopbar(){
   const top=$('topbar');
   top.className='topbar';
-  top.innerHTML=`<div class="brand"><div class="brand-badge">A</div><div><div class="eyebrow">Buenas noches</div><h1>Arcane Reads</h1></div></div><button class="mini-btn" onclick="openQuickActions()">✦ Acciones</button>`;
+  top.innerHTML=`<div class="brand"><div class="brand-badge">A</div><div><div class="eyebrow">${greeting()}, ${esc(data.profile.name||'lector')}</div><h1>Arcane Reads</h1></div></div><button class="mini-btn" onclick="openQuickActions()">✦ Acciones</button>`;
 }
 function renderNav(){
  const paths={'Inicio':'<path d="M3 10 12 3l9 7v10H3z"/><path d="M9 20v-7h6v7"/>','Libros':'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>','Biblioteca':'<path d="M3 5h6l3 2 3-2h6v15h-6l-3 2-3-2H3zM12 7v15"/>','Estadísticas':'<path d="M4 20V12h4v8M10 20V4h4v16M16 20v-11h4v11"/>','Perfil':'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>'};
@@ -74,7 +74,7 @@ function renderHome(){
       <div class="hero-copy">
         <div class="eyebrow">Tu próximo capítulo</div>
         <h2>${current?esc(current.title):'¿Qué estás leyendo?'}</h2>
-        <p>${current?`${esc(current.author||'')} · Página ${current.current||0} de ${current.pages||'—'}`:'Elige un libro de tu biblioteca para iniciar una sesión de lectura pausada.'}</p>
+        <p>${current?`${esc(current.author||'')} · Página ${current.current||0} de ${current.pages||'—'}`:'Elige un libro de tu biblioteca para iniciar una sesión de lectura pausada.'}</p>${current&&current.pages?bar(pct(current)):''}
       </div>
       <div class="hero-actions">
         <button class="btn" onclick="${current?`openReadingSession('${current.id}')`:'openAddBookFlow()'}">${current?'Empezar sesión':'Elige un libro'}</button>
@@ -103,15 +103,15 @@ function renderBooks(){
     <section>
       <div class="label-row"><div><h2>Tus libros</h2><div class="muted small">Busca, organiza y edita tus ejemplares</div></div><button class="mini-btn" onclick="openAddBookFlow()">+ Añadir</button></div>
       <div class="status-filters" aria-label="Filtrar libros">${STATUS.map(s=>`<button class="chip ${filters.status===s?'active':''}" onclick="filters.status='${s}';render()">${s}</button>`).join('')}</div>
-      <div class="book-search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input aria-label="Buscar en mis libros" placeholder="Título, autor, saga…" value="${esc(filters.query)}" oninput="filters.query=this.value;refreshBookResults()"></div>
+      <div class="book-search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input aria-label="Buscar en mis libros" placeholder="Título, autor, saga…" value="${esc(filters.query)}" oninput="filters.query=this.value;refreshBookResults()"><select class="sort" aria-label="Ordenar libros" onchange="filters.sort=this.value;refreshBookResults()">${[['recent','Recientes'],['title','Título'],['author','Autor'],['rating','Valoración']].map(([v,t])=>`<option value="${v}" ${filters.sort===v?'selected':''}>${t}</option>`).join('')}</select></div>
     </section>
     <section id="bookResults">${list.length?`<div class="book-grid">${list.map(b=>bookCard(b)).join('')}</div>`:`<div class="empty">Todavía no hay libros aquí.<br><br><button class="btn-soft" onclick="openAddBookFlow()">Añadir mi primer libro</button></div>`}</section>
   `;
   return wrap;
 }
 function refreshBookResults(){const el=$("bookResults"),list=filteredBooks();if(el)el.innerHTML=list.length?`<div class="book-grid">${list.map(bookCard).join("")}</div>`:`<div class="empty">No hay libros que coincidan con tu búsqueda.</div>`;}
-function filteredBooks(){return data.books.filter(b=> (filters.status==='Todos'||b.status===filters.status) && [b.title,b.author,b.saga,b.collection].join(' ').toLowerCase().includes(filters.query.toLowerCase()));}
-function bookCard(book){return `<button class="book-card" onclick="editBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}</div></button>`}
+function filteredBooks(){return sortBooks(data.books.filter(b=> (filters.status==='Todos'||b.status===filters.status) && [b.title,b.author,b.saga,b.collection].join(' ').toLowerCase().includes(filters.query.toLowerCase())));}
+function bookCard(book){return `<button class="book-card" onclick="editBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}${book.status==='Leyendo'&&book.pages?' · '+pct(book)+'%':''}</div>${book.status==='Leyendo'&&book.pages?bar(pct(book)):''}</button>`}
 
 function renderLibrary(){
   const shelf=activeShelf();
@@ -175,6 +175,8 @@ function renderProfile(){
   wrap.innerHTML=`
     <section><h2>Perfil</h2><div class="muted small">Configura la estética y tus datos</div></section>
     <section class="card"><div class="label-row"><div><h3>${esc(data.profile.name||'Tu perfil')}</h3><div class="muted small">Tu rincón de lectura</div></div><div class="brand-badge" style="width:46px;height:46px;font-size:20px">A</div></div></section>
+    <section class="card"><h3>Tu lectura</h3><div class="field" style="margin-top:8px"><label for="pName">Tu nombre</label><input id="pName" value="${esc(data.profile.name||'')}" onchange="data.profile.name=this.value.trim();rerender()"><label for="pGoal">Meta de libros este año</label><input id="pGoal" type="number" min="1" inputmode="numeric" value="${data.goal}" onchange="data.goal=Math.max(1,Math.round(+this.value||1));rerender()"></div></section>
+    <section class="card" id="installCard" hidden><h3>Instalar app</h3><div class="muted small" style="margin-bottom:10px">Ábrela desde tu pantalla de inicio, sin barra del navegador.</div><button class="btn-soft" onclick="installApp()">Instalar Arcane Reads</button></section>
     <section class="card"><h3>App</h3>
       <div class="switch-row"><div><strong>Tema</strong><div class="muted small">Estilo global de la app</div></div><select style="width:auto" onchange="data.theme=this.value;rerender()"><option value="classic" ${data.theme==='classic'?'selected':''}>Clásico</option><option value="dark" ${data.theme==='dark'?'selected':''}>Dark</option><option value="cozy" ${data.theme==='cozy'?'selected':''}>Cozy</option><option value="celestial" ${data.theme==='celestial'?'selected':''}>Celestial</option></select></div>
       <div class="switch-row"><div><strong>Recordatorio de lectura</strong><div class="muted small">Solo referencia visual por ahora</div></div><input style="width:110px" value="${esc(data.settings.readingReminder||'19:30')}" onchange="data.settings.readingReminder=this.value;save()"></div>
@@ -446,7 +448,7 @@ function saveBook(){
   draft.pages=Math.max(0,Math.round(draft.pages||0)); draft.current=Math.min(draft.pages||Infinity, Math.max(0,Math.round(draft.current||0)));
   const shelf=data.shelves.find(s=>s.id===draft.shelf) || activeShelf(); draft.shelf=shelf.id; draft.row=Math.min(shelf.rows-1, Math.max(0,draft.row||0));
   const idx=data.books.findIndex(b=>b.id===draft.id);
-  if(idx<0) data.books.push(draft); else data.books[idx]=draft;
+  if(idx<0) data.books.push(draft); else data.books[idx]=draft; toast('Libro guardado');
   closeSheet(); rerender();
 }
 function deleteBook(id){ if(confirm('¿Eliminar este libro?')){ data.books=data.books.filter(b=>b.id!==id); closeSheet(); rerender(); } }
@@ -466,7 +468,7 @@ function sessionDialog(){
 function openReadingSession(bookId){ sessionDialog(); setTimeout(()=>{ if($('sessBook')) $('sessBook').value=bookId; },60); }
 function saveSession(){
   const b=getBook($('sessBook').value); const pages=Math.max(0,+$('sessPages').value||0); const mins=Math.max(0,+$('sessMins').value||0);
-  data.sessions.push({id:uid(), bookId:b.id, date:$('sessDate').value, pages, minutes:mins});
+  data.sessions.push({id:uid(), bookId:b.id, date:$('sessDate').value||today(), pages, minutes:mins}); toast('Sesión guardada');
   b.current=Math.min(b.pages||Infinity,(+b.current||0)+pages); if((b.pages||0) && b.current>=b.pages){ b.status='Leído'; } else if(pages>0 || mins>0){ b.status='Leyendo'; }
   closeSheet(); rerender();
 }
@@ -513,7 +515,7 @@ $('importer').onchange = async (e)=>{
         data.books.push({id:uid(),goodreadsId:gid,title,author,isbn,pages:+val(r,'Number of Pages')||0,current:0,status:BOOK_SHELF_MAP[val(r,'Exclusive Shelf')]||'Por leer',rating:+val(r,'My Rating')||0,notes:val(r,'My Review'),description:'',publisher:'',year:'',categories:val(r,'Bookshelves'),height:22,width:14,thick:3,color:'#7b5472',edgeColor:'#e6dbc7',display:'Lomo',shelf:activeShelf().id,row:0,format:'Tapa blanda',cover:'',spine:'',edge:'',back:'',top:'',bottom:'',stackCount:3,stackFace:'Portada',saga:'',collection:val(r,'Bookshelves')});
         count++;
       }
-      rerender(); alert(`Importados ${count} libros desde Goodreads. Ahora puedes completar sus portadas, lomos, cantos y medidas.`);
+      rerender(); toast(`${count} libros importados`);
     }
   }catch(err){ alert('No se pudo importar: '+err.message); }
   e.target.value='';
@@ -521,3 +523,12 @@ $('importer').onchange = async (e)=>{
 
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
 openDB().then(load).then(()=>{ applyTheme(); render(); }).catch(err=>{ console.error(err); alert('No pude abrir el almacenamiento local. Prueba en Chrome o Edge actualizados.'); });
+
+/* v0.6: instalación, almacenamiento persistente y cierre de hojas */
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;const c=$('installCard');if(c)c.hidden=false});
+window.addEventListener('appinstalled',()=>{installEvt=null;toast('App instalada')});
+async function installApp(){if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;const c=$('installCard');if(c)c.hidden=true}
+navigator.storage?.persist?.().catch(()=>{});
+$('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))closeSheet()});
+const _render=render;render=function(){_render();if(installEvt){const c=$('installCard');if(c)c.hidden=false}};
