@@ -391,9 +391,28 @@ body.is-dark::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:
 .shelf-preview{position:relative}.shelf-preview::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 40% at 50% 0,rgba(255,206,120,.2),transparent 70%),linear-gradient(90deg,rgba(0,0,0,.4),transparent 14%,transparent 86%,rgba(0,0,0,.4))}
 .shelf-row{position:relative;border-bottom:0!important;border-image:none!important;box-shadow:none!important;margin-bottom:18px!important}
 .shelf-row::after{content:"";position:absolute;left:-6px;right:-6px;bottom:-18px;height:18px;border-radius:2px 2px 4px 4px;z-index:3;background:repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 2px,transparent 2px 9px),linear-gradient(#d4a46a,#9a6a3c 50%,#5d3a1f);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 16px 24px rgba(0,0,0,.6)}
-.shelf-book{transition:transform .28s cubic-bezier(.2,.9,.2,1),filter .28s}.shelf-book:active{transform:translateY(-12px) rotate(-1.2deg)!important;filter:brightness(1.12)}
+.shelf-book{transition:transform .28s cubic-bezier(.2,.9,.2,1),filter .28s}
 .shelf-book::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(rgba(255,255,255,.45),transparent);z-index:2;pointer-events:none}
 @media(prefers-reduced-motion:reduce){body.is-dark::before{animation:none}.shelf-book{transition:none}}
+
+/* v2.1 — estrellas, salto, madera real */
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;display:none;overflow:hidden}body.is-dark #stars{display:block}
+#stars i{position:absolute;border-radius:50%;background:#fff;box-shadow:0 0 7px 1px rgba(255,238,200,.85);animation:tw var(--d) ease-in-out var(--l) infinite alternate}
+@keyframes tw{from{opacity:.12;transform:scale(.6)}to{opacity:1;transform:scale(1.25)}}
+#stars .shoot{width:90px!important;height:2px!important;border-radius:2px;left:70%;top:8%;background:linear-gradient(90deg,transparent,#fff);box-shadow:none;animation:shoot 14s linear infinite;opacity:0;transform:rotate(28deg)}
+@keyframes shoot{0%,92%{opacity:0;transform:translate(0,0) rotate(28deg)}93%{opacity:1}100%{opacity:0;transform:translate(-260px,140px) rotate(28deg)}}
+.shelf-book:active{transform:none!important;filter:none}
+.shelf-book.lift{animation:lift .24s cubic-bezier(.2,.9,.3,1) forwards;z-index:6;filter:brightness(1.18) drop-shadow(0 16px 12px rgba(0,0,0,.65))}
+@keyframes lift{to{transform:translateY(-24px) scale(1.06) rotate(-1.5deg)}}
+.gsync{display:flex;justify-content:space-between;align-items:center;gap:12px}.gsync .small{margin-top:3px}
+.shelf-row::after{height:22px;bottom:-22px;left:0;right:0;border-radius:1px 1px 3px 3px;
+ background-image:linear-gradient(rgba(255,255,255,.34),rgba(255,255,255,0) 22%,rgba(0,0,0,0) 62%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='44'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.24' numOctaves='6' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0102 0.144' numOctaves='4' seed='16'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(#b98552,#8d5b30 55%,#6a4425);background-size:auto,600px 44px,auto;
+ box-shadow:inset 0 1px 0 rgba(255,236,200,.55),0 18px 22px -4px rgba(0,0,0,.7)}
+.shelf-row{margin-bottom:22px!important}
+.shelf-preview::after{content:"";position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:2;
+ background-image:linear-gradient(90deg,rgba(255,235,200,.28),rgba(0,0,0,0) 35%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='500'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.24 0.006' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.408 0.0036' numOctaves='4' seed='12'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(#8d5b30,#5e3a1d),linear-gradient(270deg,rgba(255,235,200,.22),rgba(0,0,0,0) 35%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='500'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.24 0.006' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.408 0.0036' numOctaves='4' seed='12'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(#8d5b30,#5e3a1d);
+ background-repeat:no-repeat,repeat-y,no-repeat,no-repeat,repeat-y,no-repeat;background-position:left,left,left,right,right,right;background-size:14px 100%,14px 500px,14px 100%,14px 100%,14px 500px,14px 100%}
+@media(prefers-reduced-motion:reduce){#stars i,#stars .shoot{animation:none}}
 </style>
 </head>
 <body><div id="splash"><img src="icon-192.png" alt=""></div><script>setTimeout(function(){var s=document.getElementById("splash");s&&s.remove()},5000)</script>
@@ -405,6 +424,6 @@ body.is-dark::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:
 </div>
 <dialog id="dlg"></dialog>
 <input type="file" id="importer" hidden accept=".csv,.json">
-<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=12.0"></script><script src="extra5.js?v=12.0"></script><script src="extra6.js?v=20.0"></script><script src="extra7.js?v=14.0"></script><script src="extra8.js?v=20.0"></script>
+<script src="app.js?v=7.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=12.0"></script><script src="extra5.js?v=12.0"></script><script src="extra6.js?v=20.0"></script><script src="extra7.js?v=21.0"></script><script src="extra8.js?v=20.0"></script><script src="extra9.js?v=21.0"></script>
 </body>
 </html>

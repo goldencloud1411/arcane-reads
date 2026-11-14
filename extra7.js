@@ -1,10 +1,10 @@
 /* Arcane Reads v1.4 — ficha completa desde Goodreads (géneros, saga, ISBN, ASIN, idioma, fecha, valoración…) + etiquetas propias */
 (function(){
-const PXS=[x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x),x=>'https://corsproxy.io/?url='+encodeURIComponent(x),x=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(x)];
-async function grHtml(u){
-  for(const p of PXS){try{const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);const r=await fetch(p(u),{signal:c.signal});clearTimeout(t);
-    if(r.ok){const h=await r.text();if(h.length>3000&&/__NEXT_DATA__|ld\+json|goodreads/i.test(h))return h}}catch{}}
-  return'';
+const PXS=[x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x),x=>'https://api.allorigins.win/get?url='+encodeURIComponent(x),x=>'https://corsproxy.io/?url='+encodeURIComponent(x),x=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(x),x=>'https://thingproxy.freeboard.io/fetch/'+x];
+function grHtml(u){
+  const mk=p=>new Promise(async(res,rej)=>{try{const c=new AbortController(),t=setTimeout(()=>c.abort(),14000);const r=await fetch(p(u),{signal:c.signal});clearTimeout(t);if(!r.ok)return rej();let h=await r.text();
+    if(h[0]==='{'){try{h=JSON.parse(h).contents||''}catch{}}if(h.length>3000&&/__NEXT_DATA__|ld\+json/.test(h))res(h);else rej()}catch{rej()}});
+  return Promise.any(PXS.map(mk)).catch(()=>'');
 }
 const LANG={spanish:'Español',english:'Inglés',french:'Francés',german:'Alemán',italian:'Italiano',portuguese:'Portugués',japanese:'Japonés',catalan:'Catalán',chinese:'Chino',korean:'Coreano',russian:'Ruso'};
 const lang=s=>{const f=String(s||'').split(/[;,]/)[0].trim();return LANG[f.toLowerCase()]||f};
@@ -64,21 +64,33 @@ async function findUrl(b,search){
   if(search&&b.title){try{const r=await searchGoodreads((b.title+' '+(b.author||'')).trim());return r[0]?.goodreadsUrl||''}catch{}}
   return'';
 }
+const L2={es:'Español',en:'Inglés',fr:'Francés',de:'Alemán',it:'Italiano',pt:'Portugués',ja:'Japonés',ca:'Catalán'};
+async function gbFallback(b){try{const isbn=String(b.isbn||'').replace(/[^0-9X]/gi,'');if(!isbn&&!b.title)return null;
+  const q=isbn?'isbn:'+isbn:`intitle:${b.title}${b.author?' inauthor:'+b.author:''}`;
+  const j=await(await fetch('https://www.googleapis.com/books/v1/volumes?maxResults=1&q='+encodeURIComponent(q))).json(),v=j.items&&j.items[0]&&j.items[0].volumeInfo;if(!v)return null;
+  const pd=String(v.publishedDate||''),ids=v.industryIdentifiers||[];
+  return{genres:[...new Set((v.categories||[]).flatMap(c=>c.split('/')).map(x=>x.trim()).filter(Boolean))],description:clean(v.description||''),pages:+v.pageCount||0,publisher:v.publisher||'',year:pd.slice(0,4),pubDate:/^\d{4}-\d{2}-\d{2}$/.test(pd)?pd:'',isbn:(ids.find(i=>i.type==='ISBN_13')||{}).identifier||'',language:L2[v.language]||v.language||'',series:'',seriesNum:'',rating:0}}catch{return null}}
 window.syncGoodreads=async function(b,o={}){
-  const url=await findUrl(b,o.search);b.grTried=Date.now();if(!url){save();return null}
-  let g=null;try{g=parseGR(await grHtml(url),url)}catch{}
+  const url=await findUrl(b,o.search);b.grTried=Date.now();let g=null;
+  if(url){try{g=parseGR(await grHtml(url),url)}catch{}}
+  if(!hasData(g)){g=await gbFallback(b);if(g)g.fallback=true}
   if(!hasData(g)){save();return null}
   const d=(typeof draft!=='undefined'&&draft&&draft.id===b.id&&draft!==b)?draft:null;
-  apply(b,g,!!o.force);if(d)apply(d,g,!!o.force);save();return g;
+  apply(b,g,!!o.force);if(g.fallback)b.grDone=0;if(d){apply(d,g,!!o.force);if(g.fallback)d.grDone=0}
+  save();return g;
 };
-
+window.syncAllBooks=async function(){const list=data.books.filter(b=>!b.grDone||!b.categories||!b.description);let ok=0,fb=0,bad=0;const sh=ms=>new Promise(r=>setTimeout(r,ms));
+  if(!list.length){toast('Todo está al día ✦');return}
+  for(let i=0;i<list.length;i++){const m=$('gsMsg');if(m)m.textContent=`Actualizando ${i+1} de ${list.length}: ${list[i].title}`;
+    const g=await syncGoodreads(list[i],{search:true});g?(g.fallback?fb++:ok++):bad++;await sh(500)}
+  rerender();toast(`Goodreads: ${ok} · respaldo: ${fb} · sin datos: ${bad}`)};
 /* se ejecuta solo: libros nuevos y, en segundo plano, los que aún no tienen la ficha completa */
 const _en=enrich;enrich=async function(b){if(b&&!b.grDone&&(b.goodreadsUrl||b.isbn))await syncGoodreads(b);return _en(b)};
 const _is=importSearchResult;importSearchResult=function(r,i){const n=data.books.length;_is(r,i);const b=data.books[data.books.length-1];
   if(data.books.length>n&&b&&(b.goodreadsUrl||b.isbn)){toast('Trayendo datos de Goodreads…');syncGoodreads(b).then(g=>{if(!g)return toast('No pude leer Goodreads; usé los datos básicos');toast('Datos de Goodreads listos ✦');
     if(typeof draft!=='undefined'&&draft&&draft.id===b.id&&$('dlg').open){editBook(null,draft)}else rerender()})}};
 let busy=false;async function grAll(){if(busy||!navigator.onLine)return;busy=true;let n=0;
-  for(const b of data.books){if(b.grDone||(!b.goodreadsUrl&&!b.isbn)||(b.grTried&&Date.now()-b.grTried<6048e5))continue;if(++n>8)break;await syncGoodreads(b);await new Promise(r=>setTimeout(r,1500))}
+  for(const b of data.books){if(b.grDone||(!b.goodreadsUrl&&!b.isbn)||(b.grTried&&Date.now()-b.grTried<216e5))continue;if(++n>12)break;await syncGoodreads(b);await new Promise(r=>setTimeout(r,1500))}
   busy=false;if(n)rerender()}
 setTimeout(grAll,7000);addEventListener('online',()=>setTimeout(grAll,2000));
 
