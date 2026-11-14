@@ -19,11 +19,46 @@ function ordered(books,mode){
   return books.slice().sort((a,b)=>(a.row||0)-(b.row||0)||idx.get(a.id)-idx.get(b.id)).map(b=>[b,'']);
 }
 
+
+/* filtros de la biblioteca: saga, género/etiqueta y estado */
+let libF={saga:'',genre:'',status:''};
+const libActive=()=>!!(libF.saga||libF.genre||libF.status);
+const gList=b=>splitList(b.categories).map(skey);
+function libMatch(b){
+  if(libF.saga&&skey(b.saga)!==libF.saga)return false;
+  if(libF.status&&b.status!==libF.status)return false;
+  if(libF.genre){const k=libF.genre[0],v=libF.genre.slice(2);if(k==='g'?!gList(b).includes(v):!(b.tags||[]).some(t=>skey(t)===v))return false}
+  return true;
+}
+const _rl=renderLibrary;renderLibrary=function(){
+  const w=_rl(),shelf=activeShelf(),all=data.books.filter(b=>b.shelf===shelf.id);
+  const cnt=(arr)=>{const m=new Map();arr.forEach(([k,label])=>{const o=m.get(k)||{label,n:0};o.n++;m.set(k,o)});return[...m.entries()].sort((a,b)=>b[1].n-a[1].n||a[1].label.localeCompare(b[1].label,'es'))};
+  const sagas=cnt(all.filter(b=>b.saga&&b.saga.trim()).map(b=>[skey(b.saga),b.saga.trim()]));
+  const gens=cnt(all.flatMap(b=>splitList(b.categories).map(g=>[skey(g),g])));
+  const tags=cnt(all.flatMap(b=>(b.tags||[]).map(t=>[skey(t),t])));
+  if(libF.saga&&!sagas.some(x=>x[0]===libF.saga))libF.saga='';
+  const opt=(v,t,cur)=>`<option value="${esc2(v)}" ${v===cur?'selected':''}>${esc2(t)}</option>`;
+  const sel=(id,first,body)=>`<select id="${id}" aria-label="${first}" class="libf">${body}</select>`;
+  const status=['Por leer','Leyendo','Leído','Abandonado'];
+  const card=w.querySelector('select')?.closest('.card');if(!card)return w;
+  const n=all.filter(libMatch).length;
+  card.insertAdjacentHTML('beforeend',`<div class="libf-row">
+    ${sel('fSaga','Saga',opt('','Sagas',libF.saga)+sagas.map(([k,o])=>opt(k,`${o.label} (${o.n})`,libF.saga)).join(''))}
+    ${sel('fGenre','Género',opt('','Géneros',libF.genre)+(gens.length?`<optgroup label="Géneros">${gens.map(([k,o])=>opt('g:'+k,`${o.label} (${o.n})`,libF.genre)).join('')}</optgroup>`:'')+(tags.length?`<optgroup label="Etiquetas">${tags.map(([k,o])=>opt('t:'+k,`${o.label} (${o.n})`,libF.genre)).join('')}</optgroup>`:''))}
+    ${sel('fStatus','Estado',opt('','Estados',libF.status)+status.map(s=>opt(s,s,libF.status)).join(''))}
+  </div>${libActive()?`<div class="libf-info"><span>${n} libro${n===1?'':'s'}</span><button class="link-btn" onclick="libClear()">Quitar filtros</button></div>`:''}`);
+  const on=(id,k)=>{const e=card.querySelector('#'+id);e.onchange=()=>{libF[k]=e.value;render()}};
+  on('fSaga','saga');on('fGenre','genre');on('fStatus','status');
+  const top=card.querySelector('select');top.onchange=function(){shelfId=this.value;libF={saga:'',genre:'',status:''};render()};
+  return w;
+};
+window.libClear=()=>{libF={saga:'',genre:'',status:''};render()};
+
 renderShelfPreview=function(shelf,large=false){
-  const books=data.books.filter(b=>b.shelf===shelf.id), mode=shelf.layout||'saga';
+  const books=data.books.filter(b=>b.shelf===shelf.id&&(!large||libMatch(b))), mode=shelf.layout||'saga';
   const bg=shelf.background?`background-image:url('${shelf.background}');background-size:cover;background-position:center;`:(shelf.theme==='cozy'?'background:linear-gradient(#ad8d78,#6d5345);':shelf.theme==='dark'?'background:linear-gradient(#32272d,#161118);':'background:var(--library-bg);');
   const html=ordered(books,mode).map(([b,u],i)=>shelfBookHtml(b).replace('<button ',`<button data-o="${i}" data-u="${esc2(u)}" data-row="${b.row||0}" `)).join('');
-  return `<div class="shelf-shell"><div class="shelf-preview" data-mode="${mode}" data-min="${shelf.rows||3}" data-cap="${large?0:3}" style="${bg}${large?'min-height:560px':'min-height:250px'}"><div class="shelf-pack">${html}</div></div></div>`;
+  return `<div class="shelf-shell"><div class="shelf-preview" data-mode="${mode}" data-min="${large&&libActive()?1:(shelf.rows||3)}" data-cap="${large?0:3}" data-f="${large&&libActive()?1:0}" style="${bg}${large?'min-height:560px':'min-height:250px'}"><div class="shelf-pack">${html}</div></div></div>`;
 };
 
 /* reparte los libros en repisas según el ancho real de la pantalla */
