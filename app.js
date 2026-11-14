@@ -44,6 +44,7 @@ function spineLabel(book){return esc(book.shortSpine || book.title || 'Libro')}
 function displayAsset(book){if(book.display==='Portada') return book.cover; if(book.display==='Canto') return book.edge; if(book.display==='Apilado') return book.cover || book.spine; return book.spine;}
 
 function render(){
+  applyTheme();
   renderTopbar(); renderNav(); $('main').innerHTML='';
   const main=$('main');
   if(tab==='Inicio') main.appendChild(renderHome());
@@ -59,8 +60,8 @@ function renderTopbar(){
   top.innerHTML=`<div class="brand"><div class="brand-badge">A</div><div><div class="eyebrow">Buenas noches</div><h1>Arcane Reads</h1></div></div><button class="mini-btn" onclick="openQuickActions()">✦ Acciones</button>`;
 }
 function renderNav(){
-  const icons={'Inicio':'⌂','Libros':'☷','Biblioteca':'📖','Estadísticas':'▮','Perfil':'◉'};
-  $('nav').innerHTML=['Inicio','Libros','Biblioteca','Estadísticas','Perfil'].map(name=>`<button class="${tab===name?'active':''}" onclick="setTab('${name}')"><span>${icons[name]}</span><span>${name}</span></button>`).join('');
+ const paths={'Inicio':'<path d="M3 10 12 3l9 7v10H3z"/><path d="M9 20v-7h6v7"/>','Libros':'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>','Biblioteca':'<path d="M3 5h6l3 2 3-2h6v15h-6l-3 2-3-2H3zM12 7v15"/>','Estadísticas':'<path d="M4 20V12h4v8M10 20V4h4v16M16 20v-11h4v11"/>','Perfil':'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>'};
+ $('nav').innerHTML=['Inicio','Libros','Biblioteca','Estadísticas','Perfil'].map(name=>`<button class="${tab===name?'active':''}" aria-current="${tab===name?'page':'false'}" onclick="setTab('${name}')"><svg viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg><span>${name}</span></button>`).join('');
 }
 
 function renderHome(){
@@ -101,13 +102,14 @@ function renderBooks(){
   wrap.innerHTML=`
     <section>
       <div class="label-row"><div><h2>Tus libros</h2><div class="muted small">Busca, organiza y edita tus ejemplares</div></div><button class="mini-btn" onclick="openAddBookFlow()">+ Añadir</button></div>
-      <div class="tabs">${STATUS.map(s=>`<button class="chip ${filters.status===s?'active':''}" onclick="filters.status='${s}';render()">${s}</button>`).join('')}</div>
-      <div class="card" style="padding:12px"><input placeholder="Buscar título, autor, saga o colección" value="${esc(filters.query)}" oninput="filters.query=this.value;render()"></div>
+      <div class="status-filters" aria-label="Filtrar libros">${STATUS.map(s=>`<button class="chip ${filters.status===s?'active':''}" onclick="filters.status='${s}';render()">${s}</button>`).join('')}</div>
+      <div class="book-search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input aria-label="Buscar en mis libros" placeholder="Título, autor, saga…" value="${esc(filters.query)}" oninput="filters.query=this.value;refreshBookResults()"></div>
     </section>
-    <section>${list.length?`<div class="book-grid">${list.map(b=>bookCard(b)).join('')}</div>`:`<div class="empty">Todavía no hay libros aquí.<br><br><button class="btn-soft" onclick="openAddBookFlow()">Añadir mi primer libro</button></div>`}</section>
+    <section id="bookResults">${list.length?`<div class="book-grid">${list.map(b=>bookCard(b)).join('')}</div>`:`<div class="empty">Todavía no hay libros aquí.<br><br><button class="btn-soft" onclick="openAddBookFlow()">Añadir mi primer libro</button></div>`}</section>
   `;
   return wrap;
 }
+function refreshBookResults(){const el=$("bookResults"),list=filteredBooks();if(el)el.innerHTML=list.length?`<div class="book-grid">${list.map(bookCard).join("")}</div>`:`<div class="empty">No hay libros que coincidan con tu búsqueda.</div>`;}
 function filteredBooks(){return data.books.filter(b=> (filters.status==='Todos'||b.status===filters.status) && [b.title,b.author,b.saga,b.collection].join(' ').toLowerCase().includes(filters.query.toLowerCase()));}
 function bookCard(book){return `<button class="book-card" onclick="editBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}</div></button>`}
 
@@ -187,6 +189,7 @@ function renderProfile(){
 function applyTheme(){
   const root=document.documentElement;
   const theme=data.theme;
+  root.dataset.theme=theme;
   if(theme==='dark'){
     root.style.setProperty('--bg','#18151e'); root.style.setProperty('--panel','#241f2d'); root.style.setProperty('--card','#221d2a'); root.style.setProperty('--nav','#1d1824'); root.style.setProperty('--ink','#f4eae2'); root.style.setProperty('--muted','#bcaea7'); root.style.setProperty('--line','#3b3244'); root.style.setProperty('--accent','#a04c5e'); root.style.setProperty('--accent-soft','#35242a');
   } else if(theme==='cozy'){
@@ -196,6 +199,8 @@ function applyTheme(){
   } else {
     root.style.cssText='';
   }
+  const systemColor=getComputedStyle(root).getPropertyValue('--bg').trim();
+  document.querySelector('meta[name="theme-color"]').setAttribute('content',systemColor);
 }
 
 function showSheet(html){ const dlg=$('dlg'); dlg.innerHTML=`<div class="sheet">${html}</div>`; if(!dlg.open) dlg.showModal(); }

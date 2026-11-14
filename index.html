@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#9a3941">
+  <meta name="theme-color" content="#f3eee5">
   <title>Arcane Reads</title>
-  <link rel="manifest" href="site.webmanifest?v=5.1">
+  <link rel="manifest" href="site.webmanifest?v=5.2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -173,6 +173,27 @@ html,body{max-width:100%;overflow-x:hidden} .app{width:100%;max-width:480px;over
 #dlg .editor-block{scroll-margin-top:10px}
 @media(max-width:350px){#dlg .swatch-row{grid-template-columns:minmax(0,1fr)}#dlg .sheet{padding:10px}#dlg .editor-save-row{grid-template-columns:minmax(0,1fr)}}
 
+
+/* Mobile shell and theme-aware surfaces */
+:root{--chip-bg:#ece3d7;--chip-ink:#594b42;--selected-bg:#49382c;--selected-ink:#fff;--nav-active:#eadfcf;--nav-ink:#65554c;--field-bg:#fffaf3;--field-ink:var(--ink)}
+html{background:var(--bg);color-scheme:light}
+body{min-height:100vh;min-height:100dvh;background:var(--bg);margin:0}
+.app{min-height:100vh;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(86px + env(safe-area-inset-bottom,0px));overflow-x:clip}
+.nav{bottom:0;padding:9px max(5px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(5px,env(safe-area-inset-left,0px));background:var(--bg);color:var(--nav-ink);box-shadow:0 -1px 0 var(--line);border-top:0}
+.nav button{color:var(--nav-ink);gap:5px;min-height:58px;font-size:clamp(10px,2.7vw,12px);padding:6px 1px;line-height:1.2}
+.nav button.active{background:var(--nav-active);color:var(--accent)}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.fab{bottom:calc(86px + env(safe-area-inset-bottom,0px));width:56px;height:56px}
+.status-filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:12px 0;overflow:visible;width:100%;padding:0}
+.status-filters .chip{grid-column:span 2;min-width:0;white-space:normal;padding:11px 5px;font-size:13px;line-height:1.15;text-align:center;min-height:42px;border:1px solid var(--line);background:var(--chip-bg);color:var(--chip-ink)}
+.status-filters .chip:nth-child(4),.status-filters .chip:nth-child(5){grid-column:span 3}
+.status-filters .chip.active{background:var(--selected-bg);color:var(--selected-ink);border-color:var(--selected-bg)}
+.chip{background:var(--chip-bg);color:var(--chip-ink)}.chip.active{background:var(--selected-bg);color:var(--selected-ink)}
+input,select,textarea{background:var(--field-bg);color:var(--field-ink);min-width:0;max-width:100%;font-size:16px}input::placeholder,textarea::placeholder{color:var(--muted)}
+.book-search{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:10px 12px;min-width:0}.book-search svg{flex:none;width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.8}.book-search input{background:transparent;border:0;padding:8px 0;outline:none;width:100%}.book-search:focus-within{outline:2px solid var(--accent)}
+.book-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.book-card{min-width:0;overflow-wrap:anywhere}.book-cover{height:auto;aspect-ratio:2/3;max-height:260px}.book-cover img{object-fit:contain}.label-row>div{min-width:0}.label-row>button{flex-shrink:0}.topbar{padding-top:16px}.editor-block{background:var(--card)}.editor-stat{background:var(--panel);color:var(--ink)}
+html[data-theme="dark"],html[data-theme="celestial"]{color-scheme:dark;--chip-bg:var(--panel);--chip-ink:var(--ink);--selected-bg:#c5a0db;--selected-ink:#211831;--nav-active:var(--accent-soft);--nav-ink:var(--muted);--field-bg:var(--panel)}
+@media(max-width:360px){.status-filters .chip{font-size:12px}.nav button{font-size:9px}.topbar>.mini-btn{padding:8px 10px}.brand-badge{width:46px;height:46px}.brand h1{font-size:23px}}
 </style>
 </head>
 <body>
@@ -230,6 +251,7 @@ function spineLabel(book){return esc(book.shortSpine || book.title || 'Libro')}
 function displayAsset(book){if(book.display==='Portada') return book.cover; if(book.display==='Canto') return book.edge; if(book.display==='Apilado') return book.cover || book.spine; return book.spine;}
 
 function render(){
+  applyTheme();
   renderTopbar(); renderNav(); $('main').innerHTML='';
   const main=$('main');
   if(tab==='Inicio') main.appendChild(renderHome());
@@ -245,8 +267,8 @@ function renderTopbar(){
   top.innerHTML=`<div class="brand"><div class="brand-badge">A</div><div><div class="eyebrow">Buenas noches</div><h1>Arcane Reads</h1></div></div><button class="mini-btn" onclick="openQuickActions()">✦ Acciones</button>`;
 }
 function renderNav(){
-  const icons={'Inicio':'⌂','Libros':'☷','Biblioteca':'📖','Estadísticas':'▮','Perfil':'◉'};
-  $('nav').innerHTML=['Inicio','Libros','Biblioteca','Estadísticas','Perfil'].map(name=>`<button class="${tab===name?'active':''}" onclick="setTab('${name}')"><span>${icons[name]}</span><span>${name}</span></button>`).join('');
+ const paths={'Inicio':'<path d="M3 10 12 3l9 7v10H3z"/><path d="M9 20v-7h6v7"/>','Libros':'<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>','Biblioteca':'<path d="M3 5h6l3 2 3-2h6v15h-6l-3 2-3-2H3zM12 7v15"/>','Estadísticas':'<path d="M4 20V12h4v8M10 20V4h4v16M16 20v-11h4v11"/>','Perfil':'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>'};
+ $('nav').innerHTML=['Inicio','Libros','Biblioteca','Estadísticas','Perfil'].map(name=>`<button class="${tab===name?'active':''}" aria-current="${tab===name?'page':'false'}" onclick="setTab('${name}')"><svg viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg><span>${name}</span></button>`).join('');
 }
 
 function renderHome(){
@@ -287,13 +309,14 @@ function renderBooks(){
   wrap.innerHTML=`
     <section>
       <div class="label-row"><div><h2>Tus libros</h2><div class="muted small">Busca, organiza y edita tus ejemplares</div></div><button class="mini-btn" onclick="openAddBookFlow()">+ Añadir</button></div>
-      <div class="tabs">${STATUS.map(s=>`<button class="chip ${filters.status===s?'active':''}" onclick="filters.status='${s}';render()">${s}</button>`).join('')}</div>
-      <div class="card" style="padding:12px"><input placeholder="Buscar título, autor, saga o colección" value="${esc(filters.query)}" oninput="filters.query=this.value;render()"></div>
+      <div class="status-filters" aria-label="Filtrar libros">${STATUS.map(s=>`<button class="chip ${filters.status===s?'active':''}" onclick="filters.status='${s}';render()">${s}</button>`).join('')}</div>
+      <div class="book-search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input aria-label="Buscar en mis libros" placeholder="Título, autor, saga…" value="${esc(filters.query)}" oninput="filters.query=this.value;refreshBookResults()"></div>
     </section>
-    <section>${list.length?`<div class="book-grid">${list.map(b=>bookCard(b)).join('')}</div>`:`<div class="empty">Todavía no hay libros aquí.<br><br><button class="btn-soft" onclick="openAddBookFlow()">Añadir mi primer libro</button></div>`}</section>
+    <section id="bookResults">${list.length?`<div class="book-grid">${list.map(b=>bookCard(b)).join('')}</div>`:`<div class="empty">Todavía no hay libros aquí.<br><br><button class="btn-soft" onclick="openAddBookFlow()">Añadir mi primer libro</button></div>`}</section>
   `;
   return wrap;
 }
+function refreshBookResults(){const el=$("bookResults"),list=filteredBooks();if(el)el.innerHTML=list.length?`<div class="book-grid">${list.map(bookCard).join("")}</div>`:`<div class="empty">No hay libros que coincidan con tu búsqueda.</div>`;}
 function filteredBooks(){return data.books.filter(b=> (filters.status==='Todos'||b.status===filters.status) && [b.title,b.author,b.saga,b.collection].join(' ').toLowerCase().includes(filters.query.toLowerCase()));}
 function bookCard(book){return `<button class="book-card" onclick="editBook('${book.id}')"><div class="book-cover">${coverHtml(book)}</div><div class="book-title">${esc(book.title)}</div><div class="muted">${esc(book.author||'Sin autor')}</div><div class="small muted">${esc(book.status||'')}</div></button>`}
 
@@ -373,6 +396,7 @@ function renderProfile(){
 function applyTheme(){
   const root=document.documentElement;
   const theme=data.theme;
+  root.dataset.theme=theme;
   if(theme==='dark'){
     root.style.setProperty('--bg','#18151e'); root.style.setProperty('--panel','#241f2d'); root.style.setProperty('--card','#221d2a'); root.style.setProperty('--nav','#1d1824'); root.style.setProperty('--ink','#f4eae2'); root.style.setProperty('--muted','#bcaea7'); root.style.setProperty('--line','#3b3244'); root.style.setProperty('--accent','#a04c5e'); root.style.setProperty('--accent-soft','#35242a');
   } else if(theme==='cozy'){
@@ -382,6 +406,8 @@ function applyTheme(){
   } else {
     root.style.cssText='';
   }
+  const systemColor=getComputedStyle(root).getPropertyValue('--bg').trim();
+  document.querySelector('meta[name="theme-color"]').setAttribute('content',systemColor);
 }
 
 function showSheet(html){ const dlg=$('dlg'); dlg.innerHTML=`<div class="sheet">${html}</div>`; if(!dlg.open) dlg.showModal(); }
