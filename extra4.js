@@ -1,0 +1,35 @@
+/* Arcane Reads v1.1 — versión final: escáner, bienvenida, temas, copias, estrellas, pulido */
+/* escáner de código de barras */
+function stopScan(){window.__scs?.getTracks().forEach(t=>t.stop());window.__scs=null}
+function isbnSearch(code){code=String(code).replace(/[^0-9X]/gi,'');if(!code)return;openSearchSheet('google');setTimeout(()=>{$('bookSearchInput').value=code;runBookSearch(true)},80)}
+async function scanBarcode(){
+  if(!('BarcodeDetector' in window)||!navigator.mediaDevices?.getUserMedia){const v=prompt('Tu navegador no puede escanear. Escribe el ISBN del libro:');if(v)isbnSearch(v);return}
+  showSheet(`<div class="sheet-header"><div><h2>Escanear código</h2><div class="muted small">Apunta al código de barras de la contraportada</div></div><button class="sheet-close" onclick="stopScan();closeSheet()">×</button></div><video id="scv" class="scv" playsinline muted></video><div id="scs" class="muted small" style="text-align:center;margin-top:10px">Buscando código…</div><button class="mini-btn" style="margin:10px auto 0;display:block" onclick="stopScan();const v=prompt('ISBN del libro:');if(v)isbnSearch(v);else closeSheet()">Escribir ISBN a mano</button>`);
+  try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});window.__scs=st;const v=$('scv');v.srcObject=st;await v.play();const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a']});
+    const tick=async()=>{if(!window.__scs)return;try{const r=await det.detect(v);if(r[0]){stopScan();navigator.vibrate?.(30);isbnSearch(r[0].rawValue);return}}catch{}setTimeout(tick,250)};tick()}
+  catch{const s=$('scs');if(s)s.textContent='No pude abrir la cámara. Revisa el permiso del navegador.'}}
+$('dlg').addEventListener('close',stopScan);
+const _oab=openAddBookFlow;openAddBookFlow=function(m){_oab(m);if(!m||m==='menu')document.querySelector('#dlg .list')?.insertAdjacentHTML('afterbegin','<button class="card" onclick="scanBarcode()" style="text-align:left"><strong>▥ Escanear código de barras</strong><div class="muted small">Apunta a la contraportada y la app encuentra tu edición.</div></button>')};
+/* temas */
+const THEME_LIST=[['classic','Clásico','#f3eee5','#7b2d34'],['dark','Dark','#1d1a22','#c5a0db'],['cozy','Cozy','#e8d5bd','#9a5a3c'],['celestial','Celestial','#17193a','#d7ae57']];
+const themePicker=()=>THEME_LIST.map(([k,n,a,b])=>`<button class="sw ${data.theme===k?'on':''}" onclick="setTheme('${k}')"><i style="background:linear-gradient(135deg,${a} 55%,${b} 55%)"></i>${n}</button>`).join('');
+function setTheme(k){data.theme=k;data.profile.theme=k;applyTheme();save();document.querySelectorAll('.sw').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick')===`setTheme('${k}')`));navigator.vibrate?.(8)}
+/* bienvenida */
+function onboarding(){showSheet(`<div style="text-align:center"><img src="icon-192.png" alt="" style="width:88px;border-radius:22px;box-shadow:var(--shadow)"><h2 style="margin:14px 0 4px">Bienvenida a Arcane Reads</h2><div class="muted small">Tu biblioteca personal, con estantería y lectura pausada.</div></div><div class="field" style="margin-top:14px"><label>¿Cómo te llamas?</label><input id="obN" value="${esc(data.profile.name||'')}"><label>Meta de libros este año</label><input id="obG" type="number" min="1" inputmode="numeric" value="${data.goal}"></div><h4 style="margin:14px 0 0">Elige tu estilo</h4><div class="themes">${themePicker()}</div><button class="btn-soft" style="width:100%;margin-top:16px" onclick="finishOnboarding()">Comenzar</button>`)}
+function finishOnboarding(){data.profile.name=$('obN').value.trim()||'lector';data.goal=Math.max(1,Math.round(+$('obG').value||20));data.settings.onboarded=true;save();closeSheet();rerender();toast('¡Todo listo!')}
+const _rn=render;render=function(){const first=!window.__loaded;window.__loaded=true;_rn();if(first)setTimeout(()=>{if(!data.settings.onboarded){if(data.books.length||data.sessions.length){data.settings.onboarded=true;save()}else onboarding()}},700)};
+/* perfil */
+const _rp=renderProfile;renderProfile=function(){const w=_rp();[...w.querySelectorAll('.switch-row')].find(r=>r.textContent.includes('Tema'))?.remove();
+  const lb=data.settings.lastBackup,days=lb?Math.floor((Date.now()-lb)/864e5):null;
+  w.querySelector('section').insertAdjacentHTML('afterend',`<section class="card"><h3>Apariencia</h3><div class="themes">${themePicker()}</div></section><section class="card"><h3>Metas</h3><div class="field"><label>Minutos de lectura al día</label><input type="number" min="5" max="600" value="${data.settings.dailyMin||20}" onchange="data.settings.dailyMin=Math.max(5,+this.value||20);save();toast('Meta guardada')"></div></section><section class="card"><h3>Copia de seguridad</h3><div class="muted small" style="margin:6px 0 10px">${lb?'Última copia: '+(days?'hace '+days+' días':'hoy'):'Aún no has hecho ninguna copia.'}${days>=7?' · Te recomiendo hacer una nueva.':''}</div><div style="display:flex;gap:8px"><button class="btn-soft" onclick="backup()">Exportar ahora</button><button class="mini-btn" onclick="$('importer').click()">Importar</button></div></section>`);
+  w.insertAdjacentHTML('beforeend','<div class="muted small" style="text-align:center;padding:10px">Arcane Reads · versión 1.1</div>');return w};
+const _bk=backup;backup=function(){_bk();data.settings.lastBackup=Date.now();save();setTimeout(rerender,300);toast('Copia exportada')};
+/* visor: estrellas y progreso editable */
+const _ob=openBook;openBook=function(id){_ob(id);const b=getBook(id),vt=document.querySelector('.vt');if(!b||!vt)return;
+  vt.querySelector('span').insertAdjacentHTML('afterend',`${b.pages?`<button class="prog" onclick="setPage('${id}')">${bar(pct(b))}<small>Página ${b.current||0} de ${b.pages} · ${pct(b)}% · toca para cambiar</small></button>`:''}<div class="stars">${[1,2,3,4,5].map(n=>`<button class="star ${(b.rating||0)>=n?'on':''}" onclick="setRating('${id}',${n})" aria-label="${n} estrellas">★</button>`).join('')}</div>`)};
+function setRating(id,n){const b=getBook(id);b.rating=b.rating===n?0:n;save();openBook(id);navigator.vibrate?.(8)}
+function setPage(id){const b=getBook(id),v=prompt('¿En qué página vas?',b.current||0);if(v===null)return;b.current=Math.max(0,Math.min(b.pages||1e5,+v||0));if(b.pages&&b.current>=b.pages){b.status='Leído';b.finished=today()}else if(b.current>0&&b.status==='Por leer')b.status='Leyendo';save();rerender();openBook(id)}
+/* aviso de actualización, háptica y splash */
+if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!$('upd'))document.body.insertAdjacentHTML('beforeend','<div id="upd"><span>Nueva versión lista</span><button onclick="location.reload()">Actualizar</button></div>')})}
+document.addEventListener('click',e=>{if(e.target.closest('.nav button,.chip,.btn,.btn-soft,.mini-btn,.edbar button,.vbar button'))navigator.vibrate?.(6)});
+setTimeout(()=>{$('splash')?.classList.add('out');setTimeout(()=>$('splash')?.remove(),600)},800);
