@@ -58,12 +58,17 @@ const row=b=>{const a=b.audio||{},p=prog(b),sr=a.series||b.saga,sn=a.seriesNum||
   <button class="al-play" aria-label="Escuchar" onclick="event.stopPropagation();auPlay('${b.id}')">${live()===b.id?PAUSE:PLAY}</button></div>`};
 function html(sid){const l=list(sid);if(!l.length)return`<div class="au-view"><div class="au-empty">${HPH}<b>Aún no hay audiolibros aquí</b><span>Cambia el formato de un libro a «Audiolibro» en el editor y aparecerá en esta lista.</span></div></div>`;
   const h=l.find(x=>x.id===live())||l.find(x=>x.status==='Leyendo')||l.find(x=>x.status==='Por leer')||l[0],run=live()===h.id,p=prog(h),tt=l.reduce((a,b)=>a+tot(b),0),hh=l.reduce((a,b)=>a+heard(b),0);
-  const sec=(t,f)=>{const x=l.filter(f);return x.length?`<section class="au-sec"><h3>${t}<small>${x.length}</small></h3><div class="al-list">${x.map(row).join('')}</div></section>`:''};
-  return`<div class="au-view"><div class="au-stats"><i><b>${l.length}</b> audiolibro${l.length>1?'s':''}</i><i><b>${fd(hh)}</b> escuchadas</i>${tt?`<i><b>${fd(tt)}</b> en total</i>`:''}</div>
-  <section class="au-hero${run?' playing':''}" style="--c:${esc(h.color||'#6b5aa8')}"><div class="ah-top"><div class="ah-cov">${cov(h)}</div><div class="au-meta"><small>${run?'Sonando ahora':h.status==='Leyendo'?'Para continuar':h.status==='Leído'?'Terminado':'Siguiente'}</small><b>${esc(h.title)}</b><span>${esc(h.author||'')}${h.narrator?' · Narra '+esc(h.narrator):''}</span>${badge(h)}</div></div>
-   ${wave(h)}<div class="au-times"><span>${fd(heard(h))} · ${p}%</span><span>${tot(h)?'faltan '+fd(Math.max(0,tot(h)-heard(h))):'sin duración'}</span></div>
-   <div class="au-btns"><button class="au-play" aria-label="Escuchar" onclick="auPlay('${h.id}')"><span class="ia">${PLAY}</span><span class="ip">${PAUSE}</span></button><span class="eq"><i></i><i></i><i></i><i></i></span><button class="au-det" onclick="bookDetails('${h.id}')">Detalles</button></div></section>
+  /* el audiolibro destacado ya no se repite en las listas de abajo */
+  const sec=(t,f)=>{const x=l.filter(b=>b.id!==h.id&&f(b));return x.length?`<section class="au-sec"><h3>${t}<small>${x.length}</small></h3><div class="al-list">${x.map(row).join('')}</div></section>`:''};
+  const label=run?'Sonando ahora':h.status==='Leyendo'?'Para continuar':h.status==='Leído'?'Terminado':'Siguiente';
+  return`<div class="au-view"><div class="au-stats"><i><b>${l.length}</b> audiolibro${l.length>1?'s':''}</i>${hh>0?`<i><b>${fd(hh)}</b> escuchadas</i>`:''}${tt?`<i><b>${fd(tt)}</b> en total</i>`:''}</div>
+  <section class="au-hero cp${run?' playing':''}" data-id="${h.id}" style="--c:${esc(h.color||'#6b5aa8')}" onclick="bookDetails('${h.id}')" role="button" tabindex="0"><div class="ah-cov">${cov(h)}</div>
+   <div class="au-meta"><small>${label}<span class="eq"><i></i><i></i><i></i><i></i></span>${badge(h)}</small><b>${esc(h.title)}</b><span>${esc(h.author||'')}${h.narrator?' · Narra '+esc(h.narrator):''}</span></div>
+   <button class="au-play" aria-label="Escuchar" onclick="event.stopPropagation();auPlay('${h.id}')"><span class="ia">${PLAY}</span><span class="ip">${PAUSE}</span></button>
+   <div class="ah-prog"><div class="au-bar" style="--p:${p}%"><i></i></div><div class="au-times"><span>${heard(h)?fd(heard(h))+' · ':''}${p}%</span><span>${tot(h)?'faltan '+fd(Math.max(0,tot(h)-heard(h))):'sin duración'}</span></div></div></section>
   ${sec('En curso',b=>b.status==='Leyendo')}${sec('Por escuchar',b=>b.status==='Por leer')}${sec('Terminados',b=>b.status==='Leído')}${sec('Otros',b=>!['Leyendo','Por leer','Leído'].includes(b.status))}</div>`}
+/* mantener el estado "sonando" del destacado al día */
+setInterval(()=>{const h=document.querySelector('.au-hero[data-id]');if(h)h.classList.toggle('playing',live()===h.dataset.id)},900);
 function auRefresh(){const e=document.querySelector('.au-view');if(!e)return;const t=document.createElement('div');t.innerHTML=html(activeShelf().id);e.replaceWith(t.firstElementChild)}
 window.auPick=id=>bookDetails(id);
 window.auPlay=id=>{if(live()===id){const b=document.querySelector('#mini button:not(.mp-open)');b&&b.click()}else startSession(id)};

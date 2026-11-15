@@ -51,7 +51,6 @@ const _rl=renderLibrary;renderLibrary=function(){const w=_rl(),sh=activeShelf(),
   if(s)s.insertAdjacentHTML('afterend',`<div class="libseg"><button class="${view==='shelf'?'on':''}" onclick="libSeg('shelf')">📚 Estantería</button><button class="${view==='audio'?'on':''}" onclick="libSeg('audio')">${HP} Audiolibros${n?' · '+n:''}</button></div>`);
   if(view==='audio'){const e=w.querySelector('.shelf-shell');if(e){const d=document.createElement('div');d.innerHTML=html(sh.id);e.replaceWith(d.firstElementChild)}}
   requestAnimationFrame(()=>{let c=document.querySelector('.libf-row');c=c&&c.closest('.card');if(c)document.documentElement.style.setProperty('--libtop',Math.round(c.getBoundingClientRect().bottom+scrollY+16)+'px')});return w};
-setInterval(()=>{const h=document.querySelector('.au-hero');if(h)h.classList.toggle('playing',live()===sel)},900);
 /* editor: duración total y narrador */
 const _eb=editBook;editBook=function(id,o){_eb(id,o);const sb=$('secBasic');if(!sb||sb.dataset.au||!draft)return;sb.dataset.au=1;
   const m=+draft.audioMins||0,at=$('grSyncMsg')||sb.lastElementChild;

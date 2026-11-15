@@ -39,3 +39,17 @@
 .ai-r{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}.ai-r span{display:block;font-size:11px;color:var(--muted)}.ai-r b{font-size:14px;overflow-wrap:anywhere}
 .ai-sum{white-space:pre-line;line-height:1.5;font-size:14px}.ai-act{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 @media(prefers-reduced-motion:reduce){.au-hero.playing .au-wave i{animation:none}}
+
+/* v2.9.1 — destacado compacto de Audiolibros */
+.au-view{gap:18px}
+.au-view .au-hero.cp{display:grid!important;grid-template-columns:64px minmax(0,1fr) 46px;grid-template-areas:"cov meta play" "prog prog prog";gap:10px 12px;align-items:center;padding:12px!important;border-radius:20px;cursor:pointer;box-shadow:0 14px 28px -16px rgba(0,0,0,.7)}
+.au-hero.cp .ah-cov{grid-area:cov;width:64px;height:64px;border-radius:11px;box-shadow:0 8px 16px -4px rgba(0,0,0,.6)}
+.au-hero.cp .au-meta{grid-area:meta;gap:2px}
+.au-hero.cp .au-meta small{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:10.5px}
+.au-hero.cp .au-meta small .al-src{margin:0;font-size:9px;padding:1px 6px;letter-spacing:.03em}
+.au-hero.cp .au-meta b{font-size:16.5px;line-height:1.15;-webkit-line-clamp:2}
+.au-hero.cp .au-meta>span{font-size:12px}
+.au-hero.cp .au-play{grid-area:play;width:46px;height:46px}
+.au-hero.cp .ah-prog{grid-area:prog;display:grid;gap:5px}
+.au-hero.cp .au-bar{margin:0}
+.au-hero.cp:active{transform:scale(.99)}

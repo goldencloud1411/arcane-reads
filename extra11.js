@@ -1,6 +1,6 @@
 /* Arcane Reads v2.3 — mantener presionado un libro = menú de acciones rápidas */
 (function(){
-const SEL='.shelf-book,.book-card,.hbook,.tonight';
+const SEL='.shelf-book,.book-card,.hbook,.tonight,.al-row,.au-hero[data-id]';
 const HOLD=420, MOVE=10;
 const buzz=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
 const I=p=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
