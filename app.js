@@ -523,7 +523,9 @@ $('importer').onchange = async (e)=>{
 };
 
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{})); }
-openDB().then(load).then(()=>{ applyTheme(); render(); }).catch(err=>{ console.error(err); alert('No pude abrir el almacenamiento local. Prueba en Chrome o Edge actualizados.'); });
+/* esperar a que TODOS los scripts (extra*.js) estén cargados antes del primer render */
+const scriptsReady=new Promise(r=>document.readyState==='loading'?document.addEventListener('DOMContentLoaded',r,{once:true}):r());
+Promise.all([openDB().then(load),scriptsReady]).then(()=>{ applyTheme(); render(); }).catch(err=>{ console.error(err); alert('No pude abrir el almacenamiento local. Prueba en Chrome o Edge actualizados.'); });
 
 /* v0.6: instalación, almacenamiento persistente y cierre de hojas */
 let installEvt=null;

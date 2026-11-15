@@ -65,32 +65,75 @@ async function findUrl(b,search){
   return'';
 }
 const L2={es:'Español',en:'Inglés',fr:'Francés',de:'Alemán',it:'Italiano',pt:'Portugués',ja:'Japonés',ca:'Catalán'};
-async function gbFallback(b){try{const isbn=String(b.isbn||'').replace(/[^0-9X]/gi,'');if(!isbn&&!b.title)return null;
-  const q=isbn?'isbn:'+isbn:`intitle:${b.title}${b.author?' inauthor:'+b.author:''}`;
-  const j=await(await fetch('https://www.googleapis.com/books/v1/volumes?maxResults=1&q='+encodeURIComponent(q))).json(),v=j.items&&j.items[0]&&j.items[0].volumeInfo;if(!v)return null;
-  const pd=String(v.publishedDate||''),ids=v.industryIdentifiers||[];
-  return{genres:[...new Set((v.categories||[]).flatMap(c=>c.split('/')).map(x=>x.trim()).filter(Boolean))],description:clean(v.description||''),pages:+v.pageCount||0,publisher:v.publisher||'',year:pd.slice(0,4),pubDate:/^\d{4}-\d{2}-\d{2}$/.test(pd)?pd:'',isbn:(ids.find(i=>i.type==='ISBN_13')||{}).identifier||'',language:L2[v.language]||v.language||'',series:'',seriesNum:'',rating:0}}catch{return null}}
+/* ¿Este libro aún necesita datos? Cuenta como actualizado si ya tiene sinopsis, géneros y páginas
+   (vengan de Goodreads, Google Books u Open Library) o si Goodreads ya lo sincronizó completo. */
+window.needsSync=b=>!b.grDone&&(!b.description||!b.categories||!b.pages);
+const tf=(u,ms=10000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(u,{signal:c.signal}).finally(()=>clearTimeout(t))};
+const isbnOf=b=>String(b.isbn||'').replace(/[^0-9X]/gi,'');
+const shortTitle=t=>String(t||'').replace(/\s*[:(\[–—-].*$/,'').trim()||String(t||'');
+function gbToG(v){const pd=String(v.publishedDate||''),ids=v.industryIdentifiers||[];
+  return{genres:[...new Set((v.categories||[]).flatMap(c=>c.split('/')).map(x=>x.trim()).filter(Boolean))],description:clean(v.description||''),pages:+v.pageCount||0,publisher:v.publisher||'',year:pd.slice(0,4),pubDate:/^\d{4}-\d{2}-\d{2}$/.test(pd)?pd:'',isbn:(ids.find(i=>i.type==='ISBN_13')||{}).identifier||'',language:L2[v.language]||v.language||'',series:'',seriesNum:'',rating:0}}
+async function gbFallback(b){
+  const isbn=isbnOf(b),t=shortTitle(b.title),au=String(b.author||'').split(',')[0].trim(),qs=[];
+  if(isbn)qs.push('isbn:'+isbn);
+  if(t){qs.push(`intitle:${t}${au?' inauthor:'+au:''}`);qs.push(`${t} ${au}`.trim())}
+  for(const qq of qs){
+    try{const j=await(await tf('https://www.googleapis.com/books/v1/volumes?maxResults=5&q='+encodeURIComponent(qq))).json();
+      const it=(j.items||[]).map(x=>x.volumeInfo).filter(Boolean);
+      const v=it.find(x=>x.description&&x.categories)||it.find(x=>x.description)||it.find(x=>x.categories)||it[0];
+      if(v){const g=gbToG(v);if(g.description||g.genres.length||g.pages)return g}}catch{}
+  }
+  return null;
+}
+async function olFallback(b){
+  try{const isbn=isbnOf(b),t=shortTitle(b.title),au=String(b.author||'').split(',')[0].trim(),f='&fields=key,subject,number_of_pages_median,publisher,first_publish_year&limit=1';
+    const u=isbn?`https://openlibrary.org/search.json?isbn=${isbn}${f}`:`https://openlibrary.org/search.json?title=${encodeURIComponent(t)}${au?'&author='+encodeURIComponent(au):''}${f}`;
+    const d=((await(await tf(u)).json()).docs||[])[0];if(!d)return null;
+    let desc='';if(d.key){try{const w=await(await tf('https://openlibrary.org'+d.key+'.json')).json(),x=w.description;desc=clean(typeof x==='string'?x:(x&&x.value)||'')}catch{}}
+    return{genres:(d.subject||[]).filter(x=>x.length<30).slice(0,5),description:desc,pages:+d.number_of_pages_median||0,publisher:(d.publisher||[])[0]||'',year:String(d.first_publish_year||''),pubDate:'',isbn:'',language:'',series:'',seriesNum:'',rating:0}}catch{return null}
+}
+/* Google Books y, si falta algo, Open Library completa los huecos */
+async function fallbackAll(b){
+  let g=await gbFallback(b);
+  if(!g||!g.description||!g.genres.length||!g.pages){
+    const o=await olFallback(b);
+    if(o){if(!g)g=o;else for(const k of['description','pages','publisher','year']){if(!g[k]&&o[k])g[k]=o[k]}if(g&&!g.genres.length&&o.genres.length)g.genres=o.genres}
+  }
+  return g;
+}
 window.syncGoodreads=async function(b,o={}){
   const url=await findUrl(b,o.search);b.grTried=Date.now();let g=null;
   if(url){try{g=parseGR(await grHtml(url),url)}catch{}}
-  if(!hasData(g)){g=await gbFallback(b);if(g)g.fallback=true}
+  if(!hasData(g)){g=await fallbackAll(b);if(g)g.fallback=true}
+  else if(!g.description||!g.genres.length||!g.pages){const x=await fallbackAll(b);if(x){for(const k of['description','pages','publisher','year']){if(!g[k]&&x[k])g[k]=x[k]}if(!g.genres.length)g.genres=x.genres}}
   if(!hasData(g)){save();return null}
   const d=(typeof draft!=='undefined'&&draft&&draft.id===b.id&&draft!==b)?draft:null;
   apply(b,g,!!o.force);if(g.fallback)b.grDone=0;if(d){apply(d,g,!!o.force);if(g.fallback)d.grDone=0}
   save();return g;
 };
-window.syncAllBooks=async function(){const list=data.books.filter(b=>!b.grDone||!b.categories||!b.description);let ok=0,fb=0,bad=0;const sh=ms=>new Promise(r=>setTimeout(r,ms));
-  if(!list.length){toast('Todo está al día ✦');return}
-  for(let i=0;i<list.length;i++){const m=$('gsMsg');if(m)m.textContent=`Actualizando ${i+1} de ${list.length}: ${list[i].title}`;
-    const g=await syncGoodreads(list[i],{search:true});g?(g.fallback?fb++:ok++):bad++;await sh(500)}
-  rerender();toast(`Goodreads: ${ok} · respaldo: ${fb} · sin datos: ${bad}`)};
+let syncing=false;
+window.syncAllBooks=async function(){
+  if(syncing)return;
+  const list=data.books.filter(needsSync);let ok=0,fb=0,bad=0;const sh=ms=>new Promise(r=>setTimeout(r,ms));
+  if(!list.length){toast('Todo está al día ✦');rerender();return}
+  syncing=true;const btn=document.querySelector('.gsync button');if(btn)btn.disabled=true;
+  try{
+    for(let i=0;i<list.length;i++){const m=$('gsMsg');if(m)m.textContent=`Actualizando ${i+1} de ${list.length}: ${list[i].title}`;
+      let g=null;try{g=await syncGoodreads(list[i],{search:true})}catch{}
+      g?(g.fallback?fb++:ok++):bad++;await sh(300)}
+  }finally{syncing=false}
+  await save();
+  const left=data.books.filter(needsSync).length;
+  rerender();
+  toast(left?`Actualizados ${list.length-left} de ${list.length} · ${left} sin datos disponibles`:`¡Listo! ${list.length} libro${list.length===1?'':'s'} actualizado${list.length===1?'':'s'} ✦`);
+};
 /* se ejecuta solo: libros nuevos y, en segundo plano, los que aún no tienen la ficha completa */
-const _en=enrich;enrich=async function(b){if(b&&!b.grDone&&(b.goodreadsUrl||b.isbn))await syncGoodreads(b);return _en(b)};
+const _en=enrich;enrich=async function(b){if(b&&needsSync(b)&&(b.goodreadsUrl||b.isbn))await syncGoodreads(b);return _en(b)};
 const _is=importSearchResult;importSearchResult=function(r,i){const n=data.books.length;_is(r,i);const b=data.books[data.books.length-1];
   if(data.books.length>n&&b&&(b.goodreadsUrl||b.isbn)){toast('Trayendo datos de Goodreads…');syncGoodreads(b).then(g=>{if(!g)return toast('No pude leer Goodreads; usé los datos básicos');toast('Datos de Goodreads listos ✦');
     if(typeof draft!=='undefined'&&draft&&draft.id===b.id&&$('dlg').open){editBook(null,draft)}else rerender()})}};
 let busy=false;async function grAll(){if(busy||!navigator.onLine)return;busy=true;let n=0;
-  for(const b of data.books){if(b.grDone||(!b.goodreadsUrl&&!b.isbn)||(b.grTried&&Date.now()-b.grTried<216e5))continue;if(++n>12)break;await syncGoodreads(b);await new Promise(r=>setTimeout(r,1500))}
+  for(const b of data.books){if(!needsSync(b)||(!b.goodreadsUrl&&!b.isbn)||(b.grTried&&Date.now()-b.grTried<216e5))continue;if(++n>12)break;await syncGoodreads(b);await new Promise(r=>setTimeout(r,1500))}
   busy=false;if(n)rerender()}
 setTimeout(grAll,7000);addEventListener('online',()=>setTimeout(grAll,2000));
 
@@ -113,8 +156,8 @@ window.tgDel=function(f,i){const a=LIST[f]();a.splice(i,1);SET[f](a);tgDraw(f,0)
 window.tgKey=function(e,f){if(e.key==='Enter'||e.key===','){e.preventDefault();const v=e.target.value;e.target.value='';tgAdd(f,v,1)}else if(e.key==='Backspace'&&!e.target.value){const a=LIST[f]();if(a.length){a.pop();SET[f](a);tgDraw(f,1)}}};
 window.grSyncDraft=async function(){const m=$('grSyncMsg'),btn=$('grSyncBtn');if(!draft||!m)return;btn.disabled=true;m.textContent='Buscando en Goodreads…';
   const g=await syncGoodreads(draft,{force:true,search:true});btn.disabled=false;
-  if(!g){m.textContent='No pude leer Goodreads ahora (puede que el servicio intermedio esté ocupado). Prueba otra vez en un rato o pega el enlace de la ficha.';return}
-  toast('Datos de Goodreads listos ✦');editBook(null,draft);setTimeout(()=>edPanel('more'),60)};
+  if(!g){m.textContent='No encontré datos ni en Goodreads, ni en Google Books, ni en Open Library. Revisa el ISBN o el título, o pega el enlace de la ficha de Goodreads.';return}
+  toast(g.fallback?'Goodreads no respondió; completé con Google Books / Open Library ✦':'Datos de Goodreads listos ✦');editBook(null,draft);setTimeout(()=>edPanel('more'),60)};
 function inject(){const sb=$('secBasic');if(!sb||sb.dataset.x7)return;sb.dataset.x7=1;
   const url=$('grBookUrl');if(url)url.insertAdjacentHTML('afterend',`<button type="button" class="mini-btn" id="grSyncBtn" style="margin-top:8px" onclick="grSyncDraft()">✦ Traer todos los datos de Goodreads</button><div class="muted small" id="grSyncMsg">${draft&&draft.grDone?'Última sincronización: '+new Date(draft.grDone).toLocaleDateString('es'):'Usa el ISBN o el enlace de la ficha.'}</div>`);
   const col=sb.querySelector('input[oninput*="draft.collection"]');
