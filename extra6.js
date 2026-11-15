@@ -32,6 +32,7 @@ function libMatch(b){
   if(libF.genre){const k=libF.genre[0],v=libF.genre.slice(2);if(k==='g'?!gList(b).includes(v):!(b.tags||[]).some(t=>skey(t)===v))return false}
   return true;
 }
+window.__libMatch=libMatch;window.__libActive=libActive;
 const _rl=renderLibrary;renderLibrary=function(){
   const w=_rl(),shelf=activeShelf(),all=data.books.filter(b=>b.shelf===shelf.id);
   const cnt=(arr)=>{const m=new Map();arr.forEach(([k,label])=>{const o=m.get(k)||{label,n:0};o.n++;m.set(k,o)});return[...m.entries()].sort((a,b)=>b[1].n-a[1].n||a[1].label.localeCompare(b[1].label,'es'))};
