@@ -53,3 +53,10 @@
 .au-hero.cp .ah-prog{grid-area:prog;display:grid;gap:5px}
 .au-hero.cp .au-bar{margin:0}
 .au-hero.cp:active{transform:scale(.99)}
+
+/* v2.9.2 — aviso de búsqueda en la ficha del audiolibro */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spn .7s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes spn{to{transform:rotate(360deg)}}
+.ai-status{font-size:13px;color:var(--muted)}.ai-status.ok{color:#4fbf78;font-weight:600}.ai-status.err{color:#e5736f}
+.au-info .mini-btn:disabled{opacity:.75}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:1.6s}}
