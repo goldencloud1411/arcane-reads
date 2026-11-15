@@ -10,8 +10,8 @@ const installed=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia
 addEventListener('pointerup',()=>{if(installed()&&!document.fullscreenElement&&screen.height-innerHeight>30&&document.documentElement.requestFullscreen)
   document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})},{passive:true,capture:true});
 /* 3) pulsación larga en portada de "Tu próximo capítulo", sagas y mini reproductor */
-const st=document.createElement('style');st.textContent='.hero-book,.saga,#mini{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.hero-book,.saga,#mini{transition:transform .35s cubic-bezier(.2,.9,.2,1)}.lp-hold2{transform:scale(.95)!important}';document.head.appendChild(st);
-const SEL='.hero-book,.saga,#mini',HOLD=420,MOVE=10,buzz=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
+const st=document.createElement('style');st.textContent='.hero-book,.saga,.sgc,#mini{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.hero-book,.saga,.sgc,#mini{transition:transform .35s cubic-bezier(.2,.9,.2,1)}.lp-hold2{transform:scale(.95)!important}';document.head.appendChild(st);
+const SEL='.hero-book,#mini,button[onclick^="openGroup("]',HOLD=420,MOVE=10,buzz=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
 const cur=()=>(data.live&&getBook(data.live.bookId))||data.books.find(b=>b.status==='Leyendo')||null;
 function menu(cov,t,s,items){
   showSheet(`<div class="la"><div class="la-head"><div class="la-cov">${cov}</div><div class="la-info"><b>${esc(t)}</b><span>${esc(s)}</span></div><button class="sheet-close" aria-label="Cerrar" onclick="closeSheet()">×</button></div><div class="la-list">${items.map((a,i)=>`<button class="la-btn${a[2]?' la-danger':''}" data-i="${i}"><span>${esc(a[0])}</span></button>`).join('')}</div></div>`);
@@ -36,12 +36,12 @@ document.addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse'&&e.button!==0)return;const el=e.target.closest&&e.target.closest(SEL);if(!el||$('dlg').open)return;
   cancel();tg=el;start={x:e.clientX,y:e.clientY};
   timer=setTimeout(()=>{timer=0;sup=Date.now()+700;const t=tg;tg&&tg.classList.remove('lp-hold2');tg=null;buzz(18);
-    if(t.matches('.saga'))sagaMenu(t);else if(t.id==='mini')miniMenu();else{const b=cur();b&&openBookActions(b.id)}},HOLD);
+    if(t.matches('button[onclick^="openGroup("]'))sagaMenu(t);else if(t.id==='mini')miniMenu();else{const b=cur();b&&openBookActions(b.id)}},HOLD);
   setTimeout(()=>{if(tg===el&&timer)el.classList.add('lp-hold2')},120)},{passive:true});
 document.addEventListener('pointermove',e=>{if(timer&&start&&Math.hypot(e.clientX-start.x,e.clientY-start.y)>MOVE)cancel()},{passive:true});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,()=>{if(timer)cancel()},{passive:true}));
 document.addEventListener('scroll',()=>{if(timer)cancel()},{passive:true,capture:true});
 window.addEventListener('click',e=>{if(Date.now()<sup&&e.target.closest&&e.target.closest(SEL)){e.stopImmediatePropagation();e.preventDefault()}},true);
 document.addEventListener('contextmenu',e=>{const el=e.target.closest&&e.target.closest(SEL);if(!el)return;e.preventDefault();
-  if(Date.now()<sup||$('dlg').open)return;sup=Date.now()+700;cancel();buzz(18);if(el.matches('.saga'))sagaMenu(el);else if(el.id==='mini')miniMenu();else{const b=cur();b&&openBookActions(b.id)}});
+  if(Date.now()<sup||$('dlg').open)return;sup=Date.now()+700;cancel();buzz(18);if(el.matches('button[onclick^="openGroup("]'))sagaMenu(el);else if(el.id==='mini')miniMenu();else{const b=cur();b&&openBookActions(b.id)}});
 })();
