@@ -42,5 +42,6 @@ document.addEventListener('pointermove',e=>{if(timer&&start&&Math.hypot(e.client
 ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,()=>{if(timer)cancel()},{passive:true}));
 document.addEventListener('scroll',()=>{if(timer)cancel()},{passive:true,capture:true});
 window.addEventListener('click',e=>{if(Date.now()<sup&&e.target.closest&&e.target.closest(SEL)){e.stopImmediatePropagation();e.preventDefault()}},true);
-document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest(SEL))e.preventDefault()});
+document.addEventListener('contextmenu',e=>{const el=e.target.closest&&e.target.closest(SEL);if(!el)return;e.preventDefault();
+  if(Date.now()<sup||$('dlg').open)return;sup=Date.now()+700;cancel();buzz(18);if(el.matches('.saga'))sagaMenu(el);else if(el.id==='mini')miniMenu();else{const b=cur();b&&openBookActions(b.id)}});
 })();

@@ -1,9 +1,9 @@
 /* Arcane Reads v1.4 — ficha completa desde Goodreads (géneros, saga, ISBN, ASIN, idioma, fecha, valoración…) + etiquetas propias */
 (function(){
 const PXS=[x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x),x=>'https://api.allorigins.win/get?url='+encodeURIComponent(x),x=>'https://corsproxy.io/?url='+encodeURIComponent(x),x=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(x),x=>'https://thingproxy.freeboard.io/fetch/'+x];
-function grHtml(u){
+function grHtml(u,loose){
   const mk=p=>new Promise(async(res,rej)=>{try{const c=new AbortController(),t=setTimeout(()=>c.abort(),14000);const r=await fetch(p(u),{signal:c.signal});clearTimeout(t);if(!r.ok)return rej();let h=await r.text();
-    if(h[0]==='{'){try{h=JSON.parse(h).contents||''}catch{}}if(h.length>3000&&/__NEXT_DATA__|ld\+json/.test(h))res(h);else rej()}catch{rej()}});
+    if(h[0]==='{'){try{h=JSON.parse(h).contents||''}catch{}}if(h.length>3000&&(loose||/__NEXT_DATA__|ld\+json/.test(h)))res(h);else rej()}catch{rej()}});
   return Promise.any(PXS.map(mk)).catch(()=>'');
 }
 const LANG={spanish:'Español',english:'Inglés',french:'Francés',german:'Alemán',italian:'Italiano',portuguese:'Portugués',japanese:'Japonés',catalan:'Catalán',chinese:'Chino',korean:'Coreano',russian:'Ruso'};
@@ -13,6 +13,9 @@ const isoDate=ms=>{const d=new Date(+ms);return isNaN(d)||!ms?'':d.toISOString()
 const clean=h=>stripHtml(String(h||'').replace(/<br\s*\/?>/gi,'\n')).replace(/\n{3,}/g,'\n\n').trim();
 
 /* lee la ficha de Goodreads: apolloState (Next.js) → JSON-LD → HTML visible */
+function parseDur(t){t=String(t||'');let m=t.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);if(m&&(m[1]||m[2]))return(+m[1]||0)*60+(+m[2]||0);
+  m=t.match(/(\d+)\s*(?:hrs?|hours?|horas?|h)\b\.?(?:\s*(?:and|y|,)?\s*(\d+)\s*(?:mins?|minutes?|minutos?|m)\b)?/i);if(m)return(+m[1])*60+(+m[2]||0);
+  m=t.match(/(\d+)\s*(?:mins?|minutes?|minutos?)\b/i);return m?+m[1]:0}
 function parseGR(html,url){
   const doc=new DOMParser().parseFromString(html,'text/html'),g={genres:[]};
   let st=null;try{st=JSON.parse(doc.getElementById('__NEXT_DATA__').textContent).props.pageProps.apolloState}catch{}
@@ -30,7 +33,9 @@ function parseGR(html,url){
       g.cover=bk.imageUrl||'';g.url=bk.webUrl||'';
       g.genres=(bk.bookGenres||[]).map(x=>R(R(x)?.genre)?.name).filter(Boolean);
       const bs=(bk.bookSeries||[]).map(R)[0];if(bs){const se=R(bs.series);g.series=se?.title||'';g.seriesNum=bs.userPosition||''}
-      const w=R(bk.work);const sx=R(w?.stats)||{};g.rating=+sx.averageRating||0;g.ratings=+sx.ratingsCount||0;g.reviews=+sx.textReviewsCount||0;
+      const w=R(bk.work);g.workId=(w&&w.legacyId)||'';
+      g.narrator=(bk.secondaryContributorEdges||[]).map(R).filter(e=>e&&/narrat/i.test(e.role||'')).map(e=>(R(e.node)||{}).name).filter(Boolean).join(', ');
+      const sx=R(w?.stats)||{};g.rating=+sx.averageRating||0;g.ratings=+sx.ratingsCount||0;g.reviews=+sx.textReviewsCount||0;
     }
   }
   try{const ld=JSON.parse(doc.querySelector('script[type="application/ld+json"]').textContent);
@@ -38,6 +43,7 @@ function parseGR(html,url){
     const ar=ld.aggregateRating||{};g.rating=g.rating||+ar.ratingValue||0;g.ratings=g.ratings||+ar.ratingCount||0;g.reviews=g.reviews||+ar.reviewCount||0;g.cover=g.cover||ld.image||''}catch{}
   if(!g.genres.length)g.genres=[...doc.querySelectorAll('[data-testid="genresList"] a, .BookPageMetadataSection__genreButton a')].map(a=>a.textContent.trim()).filter(Boolean);
   g.genres=[...new Set(g.genres)];
+  if(g.format==='Audiolibro'){const tx=[...doc.querySelectorAll('[data-testid="pagesFormat"],[data-testid="bookEdition"]')].map(x=>x.textContent).join(' | ');g.audioMins=parseDur(tx)||parseDur(doc.body?doc.body.textContent.match(/(?:Audible Audio|Audiobook)[^|]{0,120}/i)?.[0]:'')}
   if(!g.description){const d=doc.querySelector('[data-testid="description"]');g.description=d?d.textContent.trim():(doc.querySelector('meta[property="og:description"]')?.content||'')}
   if(!g.series){const a=doc.querySelector('a[href*="/series/"]');if(a){g.series=a.textContent.replace(/\s*#\s*[\d.]+\s*$/,'').replace(/\s*\(#?[\d.]+\)\s*$/,'').trim();const m=(a.parentElement?.textContent||a.textContent).match(/#\s*(\d+(?:\.\d+)?)/);g.seriesNum=m?m[1]:''}}
   if(!g.url){const u=doc.querySelector('meta[property="og:url"]')?.content||doc.querySelector('link[rel="canonical"]')?.href||'';g.url=u}
@@ -54,7 +60,7 @@ function apply(b,g,force){
   if(!b.goodreadsUrl||force)put('goodreadsUrl',g.url);
   if(g.format&&(force||!b.grDone))b.format=g.format;
   if(g.genres.length){const cur=force?[]:splitList(b.categories);b.categories=[...new Set([...cur,...g.genres])].join(', ')}
-  put('saga',g.series);put('sagaN',g.seriesNum);
+  put('saga',g.series);put('sagaN',g.seriesNum);put('audioMins',g.audioMins);put('narrator',g.narrator);
   if(g.rating){b.grRating=g.rating;b.grRatings=g.ratings;b.grReviews=g.reviews}
   b.grDone=Date.now();delete b.syncFail;
 }
@@ -106,6 +112,7 @@ async function ituFallback(b){try{const t=shortTitle(b.title),au=String(b.author
 window.syncGoodreads=async function(b,o={}){
   const url=await findUrl(b,o.search);b.grTried=Date.now();let g=null;
   if(url){try{g=parseGR(await grHtml(url),url)}catch{}}
+  if(g&&!g.audioMins&&g.workId&&(b.format==='Audiolibro'||g.format==='Audiolibro')){try{const h=await grHtml('https://www.goodreads.com/work/editions/'+g.workId+'?filter_by_format=Audiobook',true),tx=h.replace(/<[^>]+>/g,' ').replace(/\s+/g,' '),i=tx.search(/Audible Audio|Audiobook|Audio CD|Audio Download/i);if(i>=0)g.audioMins=parseDur(tx.slice(i,i+160))}catch{}}
   if(!hasData(g)){g=await fallbackAll(b);if(g)g.fallback=true}
   else if(!g.description||!g.genres.length||!g.pages){const x=await fallbackAll(b);if(x){for(const k of['description','pages','publisher','year']){if(!g[k]&&x[k])g[k]=x[k]}if(!g.genres.length)g.genres=x.genres}}
   if(!hasData(g)){save();return null}
