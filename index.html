@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" type="image/png" href="icon-192.png"><meta name="theme-color" content="#101528">
   <title>Arcane Reads</title>
-  <link rel="manifest" href="site.webmanifest?v=7.0">
+  <link rel="manifest" href="site.webmanifest?v=8.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -401,6 +401,10 @@ body.is-dark::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:
 .shelf-preview::after{content:"";position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:2;
  background-image:linear-gradient(90deg,rgba(255,235,200,.28),rgba(0,0,0,0) 35%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='500'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.24 0.006' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.408 0.0036' numOctaves='4' seed='12'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(var(--w2,#8d5b30),var(--w3b,#5e3a1d)),linear-gradient(270deg,rgba(255,235,200,.22),rgba(0,0,0,0) 35%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='500'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.24 0.006' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.408 0.0036' numOctaves='4' seed='12'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(var(--w2,#8d5b30),var(--w3b,#5e3a1d));
  background-repeat:no-repeat,repeat-y,no-repeat,no-repeat,repeat-y,no-repeat;background-position:left,left,left,right,right,right;background-size:14px 100%,14px 500px,14px 100%,14px 100%,14px 500px,14px 100%}
+/* v2.9.8 — casilla de lectura inmersiva visible y campos ocultos de verdad */
+#dlg [hidden]{display:none!important}
+#dlg .as-chk{display:flex!important;align-items:flex-start;gap:12px;font-size:14px;line-height:1.35;font-weight:500;color:var(--ink)}
+#dlg .as-chk input[type=checkbox]{width:22px!important;min-width:22px!important;max-width:22px!important;height:22px;padding:0;margin:1px 0 0;flex:none}
 /* v2.9.8 — audiolibros separados por una línea divisoria (sin recuadro) */
 .al-list{gap:0!important}
 .al-row,.au-card.al-row{position:relative!important;background:transparent!important;border:0!important;border-radius:14px!important;box-shadow:none!important;padding:14px 6px!important;margin:0!important}
@@ -420,6 +424,6 @@ body.is-dark::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:
 </div>
 <dialog id="dlg"></dialog>
 <input type="file" id="importer" hidden accept=".csv,.json">
-<script src="app.js?v=22.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=22.0"></script><script src="extra5.js?v=22.0"></script><script src="extra6.js?v=28.0"></script><script src="extra7.js?v=41.0"></script><script src="extra8.js?v=20.0"></script><script src="extra9.js?v=41.0"></script><script src="extra10.js?v=22.0"></script><script src="extra11.js?v=291.0"></script><script src="extra12.js?v=26.0"></script><script src="extra13.js?v=26.0"></script><script src="extra14.js?v=42.0"></script><script src="extra15.js?v=29.0"></script><script src="extra16.js?v=291.0"></script><script src="extra17.js?v=292.0"></script><script src="extra18.js?v=50.0"></script>
+<script src="app.js?v=22.0"></script><script src="extra.js?v=8.0"></script><script src="extra2.js?v=10.0"></script><script src="extra3.js?v=10.0"></script><script src="extra4.js?v=22.0"></script><script src="extra5.js?v=22.0"></script><script src="extra6.js?v=28.0"></script><script src="extra7.js?v=41.0"></script><script src="extra8.js?v=20.0"></script><script src="extra9.js?v=41.0"></script><script src="extra10.js?v=22.0"></script><script src="extra11.js?v=291.0"></script><script src="extra12.js?v=26.0"></script><script src="extra13.js?v=26.0"></script><script src="extra14.js?v=42.0"></script><script src="extra15.js?v=29.0"></script><script src="extra16.js?v=292.0"></script><script src="extra17.js?v=293.0"></script><script src="extra18.js?v=52.0"></script><script src="extra19.js?v=2.0"></script>
 </body>
 </html>

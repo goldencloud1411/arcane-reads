@@ -3,8 +3,8 @@
 const AUD=b=>b.format==='Audiolibro',live=()=>data.live&&data.live.since?data.live.bookId:null;
 const HP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>';
 const PLAY='<svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>',PAUSE='<svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
-const tot=b=>+b.audioMins||0,heard=b=>Math.round((data.sessions||[]).filter(s=>s.bookId===b.id).reduce((a,s)=>a+(+(s.minutes||s.mins||s.duration||s.min)||0),0));
-const fd=m=>{m=Math.round(m);if(m<=0)return'—';const h=Math.floor(m/60),r=m%60;return h?(r?`${h} h ${r} min`:`${h} h`):`${r} min`};
+const tot=b=>(+b.audioMins||0)+(+b.audioSecs||0)/60,heard=b=>(data.sessions||[]).filter(s=>s.bookId===b.id).reduce((a,s)=>a+(+(s.minutes||s.mins||s.duration||s.min)||0)+(+s.secs||0)/60,0);
+const fd=m=>{const t=Math.round((+m||0)*60);if(t<=0)return'—';const h=Math.floor(t/3600),r=Math.floor(t%3600/60),s=t%60;return [h?h+' h':'',r?r+' min':'',s?s+' s':''].filter(Boolean).join(' ')};
 const prog=b=>b.status==='Leído'?100:tot(b)?Math.min(100,Math.round(heard(b)/tot(b)*100)):(typeof pct==='function'?pct(b):0);
 let view='shelf',sel=null;try{view=localStorage.getItem('ar_libview')||'shelf'}catch(e){}
 const cov=(b,c)=>b.cover?`<img src="${esc(b.cover)}" alt="" draggable="false">`:`<div class="au-ph" style="background:${esc(b.color||'#4b3f6b')}">${HP}</div>`;
@@ -53,9 +53,9 @@ const _rl=renderLibrary;renderLibrary=function(){const w=_rl(),sh=activeShelf(),
   requestAnimationFrame(()=>{let c=document.querySelector('.libf-row');c=c&&c.closest('.card');if(c)document.documentElement.style.setProperty('--libtop',Math.round(c.getBoundingClientRect().bottom+scrollY+16)+'px')});return w};
 /* editor: duración total y narrador */
 const _eb=editBook;editBook=function(id,o){_eb(id,o);const sb=$('secBasic');if(!sb||sb.dataset.au||!draft)return;sb.dataset.au=1;
-  const m=+draft.audioMins||0,at=$('grSyncMsg')||sb.lastElementChild;
-  at.insertAdjacentHTML('afterend',`<label>Audiolibro · duración total</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input type="number" min="0" placeholder="horas" value="${m?Math.floor(m/60):''}" oninput="auDur(this,'h')"><input type="number" min="0" max="59" placeholder="minutos" value="${m?m%60:''}" oninput="auDur(this,'m')"></div><label>Narrador</label><input value="${esc(draft.narrator||'')}" placeholder="Quién narra" oninput="draft.narrator=this.value">`)};
-window.auDur=(el,k)=>{const r=el.parentElement.querySelectorAll('input'),h=+r[0].value||0,m=+r[1].value||0;draft.audioMins=h*60+m};
+  const m=+draft.audioMins||0,sc=+draft.audioSecs||0,at=$('grSyncMsg')||sb.lastElementChild;
+  at.insertAdjacentHTML('afterend',`<label>Audiolibro · duración total</label><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><input type="number" min="0" placeholder="horas" value="${m?Math.floor(m/60):''}" oninput="auDur(this,'h')"><input type="number" min="0" max="59" placeholder="minutos" value="${m?m%60:''}" oninput="auDur(this,'m')"><input type="number" min="0" max="59" placeholder="segundos" value="${sc||''}" oninput="auDur(this,'s')"></div><label>Narrador</label><input value="${esc(draft.narrator||'')}" placeholder="Quién narra" oninput="draft.narrator=this.value">`)};
+window.auDur=(el,k)=>{const r=el.parentElement.querySelectorAll('input'),h=+r[0].value||0,m=+r[1].value||0;draft.audioMins=h*60+m;draft.audioSecs=Math.min(59,+r[2].value||0)};
 /* pulsación larga en un audiolibro = menú de acciones */
 let tm=0,sp=0;const cl=()=>{clearTimeout(tm);tm=0};
 document.addEventListener('pointerdown',e=>{const r=e.target.closest&&e.target.closest('.au-card');if(!r||$('dlg').open)return;cl();tm=setTimeout(()=>{tm=0;sp=Date.now()+700;try{navigator.vibrate&&navigator.vibrate(18)}catch(x){}window.openBookActions&&openBookActions(r.dataset.id)},420)},{passive:true});

@@ -4,8 +4,8 @@ const AUD=b=>b.format==='Audiolibro',live=()=>data.live&&data.live.since?data.li
 const MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const HPH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>';
 const PLAY='<svg viewBox="0 0 24 24" width="20" height="20"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>',PAUSE='<svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
-const tot=b=>+b.audioMins||0,heard=b=>Math.round((data.sessions||[]).filter(s=>s.bookId===b.id).reduce((a,s)=>a+(+(s.minutes||s.mins||s.duration||s.min)||0),0));
-const fd=m=>{m=Math.round(m);if(m<=0)return'—';const h=Math.floor(m/60),r=m%60;return h?(r?`${h} h ${r} min`:`${h} h`):`${r} min`};
+const tot=b=>(+b.audioMins||0)+(+b.audioSecs||0)/60,heard=b=>(data.sessions||[]).filter(s=>s.bookId===b.id).reduce((a,s)=>a+(+(s.minutes||s.mins||s.duration||s.min)||0)+(+s.secs||0)/60,0);
+const fd=m=>{const t=Math.round((+m||0)*60);if(t<=0)return'—';const h=Math.floor(t/3600),r=Math.floor(t%3600/60),s=t%60;return [h?h+' h':'',r?r+' min':'',s?s+' s':''].filter(Boolean).join(' ')};
 const prog=b=>b.status==='Leído'?100:tot(b)?Math.min(100,Math.round(heard(b)/tot(b)*100)):(typeof pct==='function'?pct(b):0);
 const srcOf=b=>b.audioSrc||(/graphic ?audio|dramatized|full cast|reparto completo/i.test([b.title,b.narrator,b.publisher,(b.audio&&b.audio.publisher)||''].join(' '))?'graphicaudio':'audible');
 const SRC={audible:'Audible',graphicaudio:'GraphicAudio'};
@@ -46,7 +46,7 @@ async function graphic(b){const q=String(b.title||'').split(/[:–—]/)[0].trim
 async function audioSync(b,force){const src=srcOf(b);let a=null;try{a=src==='graphicaudio'?(await graphic(b))||(await audible(b,true)):(await audible(b))}catch{}
   b.audioTried=Date.now();if(!a){save();return null}
   a.src=src;a.fetched=Date.now();b.audio=a;
-  if(a.mins&&(force||!b.audioMins))b.audioMins=a.mins;if(a.narrators&&a.narrators.length&&(force||!b.narrator))b.narrator=a.narrators.slice(0,3).join(', ');
+  if(a.mins&&(force||!b.audioMins)){if(+b.audioMins!==a.mins)b.audioSecs=0;b.audioMins=a.mins}if(a.narrators&&a.narrators.length&&(force||!b.narrator))b.narrator=a.narrators.slice(0,3).join(', ');
   if(!b.publisher&&a.publisher)b.publisher=a.publisher;if(!b.year&&a.release)b.year=String(a.release).slice(-4).match(/\d{4}/)?String(a.release).slice(-4):String(a.release).slice(0,4);
   if(!b.description&&a.summary)b.description=a.summary;if(a.series&&!b.saga){b.saga=a.series;if(a.seriesNum&&!b.sagaN)b.sagaN=+a.seriesNum||''}if(a.isbn&&!b.isbn)b.isbn=a.isbn;
   save();return a}
@@ -60,9 +60,9 @@ const row=b=>{const a=b.audio||{},p=prog(b),sr=a.series||b.saga,sn=a.seriesNum||
   <div class="al-info"><b>${esc(b.title)}</b><span class="al-by">${esc(b.author||'')}</span>${b.narrator?`<span class="al-nar">${MIC}${esc(b.narrator)}</span>`:''}<div class="al-chips">${ch}</div><div class="al-bar" style="--p:${p}%"><i></i></div><div class="al-pt"><span>${p?p+'%':'Sin empezar'}${tot(b)&&p&&p<100?' · faltan '+fd(Math.max(0,tot(b)-heard(b))):''}</span>${badge(b)}</div></div>
   <button class="al-play" aria-label="Escuchar" onclick="event.stopPropagation();auPlay('${b.id}')">${live()===b.id?PAUSE:PLAY}</button></div>`};
 function html(sid){const l=list(sid);if(!l.length)return`<div class="au-view"><div class="au-empty">${HPH}<b>Aún no hay audiolibros aquí</b><span>Cambia el formato de un libro a «Audiolibro» en el editor y aparecerá en esta lista.</span></div></div>`;
-  const h=l.find(x=>x.id===live())||l.find(x=>x.status==='Leyendo')||l.find(x=>x.status==='Por leer')||l[0],run=live()===h.id,p=prog(h),tt=l.reduce((a,b)=>a+tot(b),0),hh=l.reduce((a,b)=>a+heard(b),0);
+  const last=b=>{const S=data.sessions||[];for(let i=S.length-1;i>=0;i--)if(S[i].bookId===b.id)return i;return-1},h=l.find(x=>x.id===live())||l.filter(x=>x.status==='Leyendo'&&last(x)>=0).sort((a,b)=>last(b)-last(a))[0]||l.find(x=>x.status==='Leyendo')||l.find(x=>x.status==='Por leer')||l[0],run=live()===h.id,p=prog(h),tt=l.reduce((a,b)=>a+tot(b),0),hh=l.reduce((a,b)=>a+heard(b),0);
   /* el audiolibro destacado ya no se repite en las listas de abajo */
-  const sec=(t,f)=>{const x=l.filter(b=>b.id!==h.id&&f(b));return x.length?`<section class="au-sec"><h3>${t}<small>${x.length}</small></h3><div class="al-list">${x.map(row).join('')}</div></section>`:''};
+  const sec=(t,f)=>{const x=l.filter(b=>b.id!==h.id&&f(b)).sort((a,b)=>last(b)-last(a));return x.length?`<section class="au-sec"><h3>${t}<small>${x.length}</small></h3><div class="al-list">${x.map(row).join('')}</div></section>`:''};
   const label=run?'Sonando ahora':h.status==='Leyendo'?'Para continuar':h.status==='Leído'?'Terminado':'Siguiente';
   return`<div class="au-view"><div class="au-stats"><i><b>${l.length}</b> audiolibro${l.length>1?'s':''}</i>${hh>0?`<i><b>${fd(hh)}</b> escuchadas</i>`:''}${tt?`<i><b>${fd(tt)}</b> en total</i>`:''}</div>
   <section class="au-hero cp${run?' playing':''}" data-id="${h.id}" style="--c:${esc(h.color||'#6b5aa8')}" onclick="bookDetails('${h.id}')" role="button" tabindex="0"><div class="ah-cov">${cov(h)}</div>
@@ -102,7 +102,7 @@ new MutationObserver(()=>{const db=document.querySelector('.dt-body');if(!db||db
 const _eb17=editBook;editBook=function(id,o){_eb17(id,o);const sb=$('secBasic');if(!sb||sb.dataset.au2||!draft)return;sb.dataset.au2=1;const nl=[...sb.querySelectorAll('label')].find(l=>/^Narrador/.test(l.textContent.trim()));if(!nl||!nl.nextElementSibling)return;
   nl.nextElementSibling.insertAdjacentHTML('afterend',`<label>Producción del audiolibro</label><select onchange="draft.audioSrc=this.value"><option value="">Automática</option><option value="audible" ${draft.audioSrc==='audible'?'selected':''}>Audible (un narrador)</option><option value="graphicaudio" ${draft.audioSrc==='graphicaudio'?'selected':''}>GraphicAudio (reparto completo)</option></select><button type="button" class="mini-btn" style="margin-top:8px" onclick="audioFromEditor()">Traer datos del audiolibro</button><div id="auMsg" class="muted small" style="margin-top:6px"></div>`)};
 window.audioFromEditor=async()=>{const m=$('auMsg');if(!m||!draft)return;const nm=SRC[srcOf(draft)];let sc=0;m.textContent='Buscando en '+nm+'…';const tk=setInterval(()=>{m.textContent='Buscando en '+nm+'… '+(++sc)+' s'},1000);let a=null;try{a=await audioSync(draft,true)}catch{}finally{clearInterval(tk)}if(!a){m.textContent='No encontré este audiolibro. Revisa el título y el autor, o escribe los datos a mano.';return}
-  const sb=$('secBasic'),inp=p=>[...sb.querySelectorAll('input')].find(i=>i.placeholder===p);const M=+draft.audioMins||0,h=inp('horas'),mi=inp('minutos'),n=inp('Quién narra');if(h)h.value=M?Math.floor(M/60):'';if(mi)mi.value=M?M%60:'';if(n)n.value=draft.narrator||'';
+  const sb=$('secBasic'),inp=p=>[...sb.querySelectorAll('input')].find(i=>i.placeholder===p);const M=+draft.audioMins||0,h=inp('horas'),mi=inp('minutos'),se=inp('segundos'),n=inp('Quién narra');if(h)h.value=M?Math.floor(M/60):'';if(mi)mi.value=M?M%60:'';if(se)se.value=+draft.audioSecs||'';if(n)n.value=draft.narrator||'';
   const ta=sb.querySelector('textarea');if(ta&&!ta.value&&draft.description)ta.value=draft.description;m.textContent=`Listo: ${fd(M)}${draft.narrator?' · Narra '+draft.narrator:''}`};
 const _rr17=rerender;rerender=function(){_rr17();setTimeout(audioAll,900)};
 setTimeout(audioAll,3000);addEventListener('online',()=>setTimeout(audioAll,1500));
