@@ -26,6 +26,11 @@ const clean=h=>stripHtml(String(h||'').replace(/<br\s*\/?>/gi,'\n')).replace(/\n
 function parseDur(t){t=String(t||'');let m=t.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);if(m&&(m[1]||m[2]))return(+m[1]||0)*60+(+m[2]||0);
   m=t.match(/(\d+)\s*(?:hrs?|hours?|horas?|h)\b\.?(?:\s*(?:and|y|,)?\s*(\d+)\s*(?:mins?|minutes?|minutos?|m)\b)?/i);if(m)return(+m[1])*60+(+m[2]||0);
   m=t.match(/(\d+)\s*(?:mins?|minutes?|minutos?)\b/i);return m?+m[1]:0}
+/* editor: solo se vuelve a dibujar si sigues en él, y conserva el panel y el scroll que tenías (no abre nada solo) */
+function editorOpen(id){const d=$('dlg');return !!(d&&d.open&&d.classList.contains('edfull')&&$('secBasic')&&typeof draft!=='undefined'&&draft&&draft.id===id)}
+function reopenEditor(){const was=typeof edCur!=='undefined'?edCur:'',em=$('edmore'),els=[em,em&&em.parentElement,document.querySelector('#dlg .sheet')].filter(Boolean),sc=els.map(e=>e.scrollTop);
+  editBook(null,draft);const back=()=>{if(!editorOpen(draft.id))return;const n=[$('edmore'),$('edmore')&&$('edmore').parentElement,document.querySelector('#dlg .sheet')].filter(Boolean);n.forEach((e,i)=>{if(sc[i]!=null)e.scrollTop=sc[i]})};
+  setTimeout(()=>{if(was&&editorOpen(draft.id))edPanel(was,1);back();setTimeout(back,120)},60)}
 function parseGR(html,url){
   const doc=new DOMParser().parseFromString(html,'text/html'),g={genres:[]};
   let st=null;try{st=JSON.parse(doc.getElementById('__NEXT_DATA__').textContent).props.pageProps.apolloState}catch{}
@@ -158,7 +163,7 @@ window.syncAllBooks=async function(){
 const _en=enrich;enrich=async function(b){if(b&&needsSync(b)&&(b.goodreadsUrl||b.isbn))await syncGoodreads(b);return _en(b)};
 const _is=importSearchResult;importSearchResult=function(r,i){const n=data.books.length;_is(r,i);const b=data.books[data.books.length-1];
   if(data.books.length>n&&b&&(b.goodreadsUrl||b.isbn)){toast('Trayendo datos de Goodreads…');syncGoodreads(b).then(g=>{if(!g)return toast('No pude leer Goodreads; usé los datos básicos');toast('Datos de Goodreads listos ✦');
-    if(typeof draft!=='undefined'&&draft&&draft.id===b.id&&$('dlg').open){editBook(null,draft)}else rerender()})}};
+    if(editorOpen(b.id))reopenEditor();else if(!$('dlg').open)rerender()})}};
 let busy=false;async function grAll(){if(busy||!navigator.onLine)return;busy=true;let n=0;
   for(const b of data.books){if(!needsSync(b)||(!b.goodreadsUrl&&!b.isbn)||(b.grTried&&Date.now()-b.grTried<216e5))continue;if(++n>12)break;await syncGoodreads(b);await new Promise(r=>setTimeout(r,1500))}
   busy=false;if(n)rerender()}
@@ -184,7 +189,7 @@ window.tgKey=function(e,f){if(e.key==='Enter'||e.key===','){e.preventDefault();c
 window.grSyncDraft=async function(){const m=$('grSyncMsg'),btn=$('grSyncBtn');if(!draft||!m)return;btn.disabled=true;m.textContent='Buscando en Goodreads…';
   const g=await syncGoodreads(draft,{force:true,search:true});btn.disabled=false;
   if(!g){m.textContent='No encontré datos ni en Goodreads, ni en Google Books, ni en Open Library. Revisa el ISBN o el título, o pega el enlace de la ficha de Goodreads.';return}
-  toast(g.fallback?'Goodreads no respondió; completé con Google Books / Open Library ✦':'Datos de Goodreads listos ✦');editBook(null,draft);setTimeout(()=>edPanel('more'),60)};
+  toast(g.fallback?'Goodreads no respondió; completé con Google Books / Open Library ✦':'Datos de Goodreads listos ✦');if(editorOpen(draft.id))reopenEditor()};
 function inject(){const sb=$('secBasic');if(!sb||sb.dataset.x7)return;sb.dataset.x7=1;
   const url=$('grBookUrl');if(url)url.insertAdjacentHTML('afterend',`<button type="button" class="mini-btn" id="grSyncBtn" style="margin-top:8px" onclick="grSyncDraft()">✦ Traer todos los datos de Goodreads</button><div class="muted small" id="grSyncMsg">${draft&&draft.grDone?'Última sincronización: '+new Date(draft.grDone).toLocaleDateString('es'):'Usa el ISBN o el enlace de la ficha.'}</div>`);
   const col=sb.querySelector('input[oninput*="draft.collection"]');
