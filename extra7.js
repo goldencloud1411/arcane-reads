@@ -88,7 +88,7 @@ async function findUrl(b,search){
 const L2={es:'Español',en:'Inglés',fr:'Francés',de:'Alemán',it:'Italiano',pt:'Portugués',ja:'Japonés',ca:'Catalán'};
 /* ¿Este libro aún necesita datos? Cuenta como actualizado si ya tiene sinopsis, géneros y páginas
    (vengan de Goodreads, Google Books u Open Library) o si Goodreads ya lo sincronizó completo. */
-window.needsSync=b=>!b.grDone&&(!b.description||!b.categories||!b.pages)&&!(b.syncFail&&Date.now()-b.syncFail<6048e5);
+window.needsSync=b=>!b.grDone&&(!b.description||!b.categories||!(b.pages||b.format==='Audiolibro'))&&!(b.syncFail&&Date.now()-b.syncFail<6048e5)&&!(b.syncOk&&Date.now()-b.syncOk<6048e5);
 const tf=(u,ms=10000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(u,{signal:c.signal}).finally(()=>clearTimeout(t))};
 const isbnOf=b=>String(b.isbn||'').replace(/[^0-9X]/gi,'');
 const shortTitle=t=>String(t||'').replace(/\s*[:(\[–—-].*$/,'').trim()||String(t||'');
@@ -139,7 +139,7 @@ window.syncGoodreads=async function(b,o={}){
   if(late)grP.then(gg=>{if(gg&&hasData(gg)){apply(b,gg,false);save();if(typeof auRefresh==='function')try{auRefresh()}catch{}}}).catch(()=>{});
   if(!hasData(g)){save();return null}
   const d=(typeof draft!=='undefined'&&draft&&draft.id===b.id&&draft!==b)?draft:null;
-  apply(b,g,!!o.force);if(g.fallback)b.grDone=0;if(d){apply(d,g,!!o.force);if(g.fallback)d.grDone=0}
+  apply(b,g,!!o.force);b.syncOk=Date.now();if(g.fallback)b.grDone=0;if(d){apply(d,g,!!o.force);if(g.fallback)d.grDone=0}
   save();return g;
 };
 let syncing=false;
@@ -151,7 +151,7 @@ window.syncAllBooks=async function(){
   try{
     let idx=0,done=0;const upd=()=>{const m=$('gsMsg');if(m)m.textContent=`Actualizando ${Math.min(done+1,list.length)} de ${list.length}…`};upd();
     const worker=async()=>{while(idx<list.length){const bk=list[idx++];let g=null;try{g=await syncGoodreads(bk,{search:true})}catch{}
-      if(g){g.fallback?fb++:ok++;delete bk.syncFail}else{bad++;bk.syncFail=Date.now();failed.push(bk.title)}done++;upd()}};
+      if(g){g.fallback?fb++:ok++;delete bk.syncFail;bk.syncOk=Date.now()}else{bad++;bk.syncFail=Date.now();failed.push(bk.title)}done++;upd()}};
     await Promise.all([worker(),worker(),worker()]);
   }finally{syncing=false}
   await save();
