@@ -5,10 +5,7 @@ const meta=document.querySelector('meta[name="theme-color"]');
 const sync=()=>{try{let c=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
   if(!c||/gradient|url/.test(c))c=getComputedStyle(document.body).backgroundColor;if(c&&meta)meta.content=c}catch(e){}};
 const _r=render;render=function(){_r();sync()};sync();
-/* 2) si las barras reaparecen (al intentar cerrar/cambiar de app), el siguiente toque vuelve a pantalla completa */
-const installed=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches;
-addEventListener('pointerup',()=>{if(installed()&&!document.fullscreenElement&&screen.height-innerHeight>30&&document.documentElement.requestFullscreen)
-  document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})},{passive:true,capture:true});
+/* (v2.9.6) sin pantalla completa forzada: la app es "standalone", así que un solo deslizamiento cierra la app como cualquier otra */
 /* 3) pulsación larga en portada de "Tu próximo capítulo", sagas y mini reproductor */
 const st=document.createElement('style');st.textContent='.hero-book,.saga,.sgc,#mini{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.hero-book,.saga,.sgc,#mini{transition:transform .35s cubic-bezier(.2,.9,.2,1)}.lp-hold2{transform:scale(.95)!important}';document.head.appendChild(st);
 const SEL='.hero-book,#mini,button[onclick^="openGroup("]',HOLD=420,MOVE=10,buzz=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};

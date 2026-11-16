@@ -2,7 +2,7 @@
   "name": "Arcane Reads",
   "short_name": "Arcane Reads",
   "start_url": "/arcane-reads/",
-  "display": "fullscreen",
+  "display": "standalone",
   "background_color": "#101528",
   "theme_color": "#101528",
   "description": "Tu biblioteca digital personalizada para coleccionar, organizar y leer.",
@@ -35,7 +35,6 @@
     "lifestyle"
   ],
   "display_override": [
-    "fullscreen",
     "standalone"
   ]
 }
