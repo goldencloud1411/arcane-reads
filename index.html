@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" type="image/png" href="icon-192.png"><meta name="theme-color" content="#101528">
   <title>Arcane Reads</title>
-  <link rel="manifest" href="site.webmanifest?v=8.0">
+  <link rel="manifest" href="site.webmanifest?v=9.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -401,6 +401,8 @@ body.is-dark::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:
 .shelf-preview::after{content:"";position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:2;
  background-image:linear-gradient(90deg,rgba(255,235,200,.28),rgba(0,0,0,0) 35%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='500'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.24 0.006' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.408 0.0036' numOctaves='4' seed='12'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(var(--w2,#8d5b30),var(--w3b,#5e3a1d)),linear-gradient(270deg,rgba(255,235,200,.22),rgba(0,0,0,0) 35%,rgba(0,0,0,.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='500'%3E%3Cfilter id='a' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.24 0.006' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  2.4 0 0 0 -.8'/%3E%3C/filter%3E%3Cfilter id='b' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.408 0.0036' numOctaves='4' seed='12'/%3E%3CfeColorMatrix values='0 0 0 0 .95  0 0 0 0 .72  0 0 0 0 .45  1.6 0 0 0 -.85'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url%28%23a%29'/%3E%3Crect width='100%' height='100%' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(var(--w2,#8d5b30),var(--w3b,#5e3a1d));
  background-repeat:no-repeat,repeat-y,no-repeat,no-repeat,repeat-y,no-repeat;background-position:left,left,left,right,right,right;background-size:14px 100%,14px 500px,14px 100%,14px 100%,14px 500px,14px 100%}
+/* v2.9.11 — pantalla completa: respeta la muesca/cámara */
+body{padding-top:env(safe-area-inset-top,0px)}
 /* v2.9.8 — casilla de lectura inmersiva visible y campos ocultos de verdad */
 #dlg [hidden]{display:none!important}
 #dlg .as-chk{display:flex!important;align-items:flex-start;gap:12px;font-size:14px;line-height:1.35;font-weight:500;color:var(--ink)}
